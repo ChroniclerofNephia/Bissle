@@ -397,8 +397,7 @@ function rollDice(x, n, message) {
             results[0][k] = Math.floor(Math.random()*n)+1;
             // if sender says 'please', roll really good maybe
             if (message.content.includes('please')) {
-                if(Math.random() > 0)
-                    results[0][k] = Math.min(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
+                results[0][k] = Math.min(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
             }
         }
         if(results[0][k] == n || results[0][k] == 1) results[1][k] = '**'+results[0][k]+'**';
