@@ -400,10 +400,6 @@ function rollDice(x, n, message) {
                 if(Math.random() > 0)
                     results[0][k] = Math.min(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
             }
-            else if (isNorrick(message)){
-                if(Math.random() > 0.8)
-                    results[0][k] = Math.max(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
-            }
         }
         if(results[0][k] == n || results[0][k] == 1) results[1][k] = '**'+results[0][k]+'**';
         else results[1][k] = ''+results[0][k];
