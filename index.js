@@ -3,7 +3,7 @@ const settings = require("./botsettings.json");
 const bot = new Discord.Client({disableEveryone: true});
 const PREFIX = settings.prefix;
 bot.login(settings.token);
-var autoBoopEnabled = false;
+var nonsenseModeEnabled = false; var alphaLet = 6;
 
 bot.on("ready", async () => {
     console.log("Bissle is ready to rumble!");
@@ -15,7 +15,10 @@ bot.on("ready", async () => {
 
 bot.on("message", async (message) => {
     if (message.author.equals(bot.user)) return;
-    if (autoBoopEnabled) autoBoop(message);
+    if (nonsenseModeEnabled) {
+        autoBoop(message);
+        alphabet(message);
+    }
     if (!message.content.startsWith(PREFIX)) return;
 
     var args = message.content.substring(PREFIX.length).split(" ");
@@ -24,58 +27,14 @@ bot.on("message", async (message) => {
         case "r":
             roll(message, args);
             break;
+        case "rr":
+            rollLots(message, args);
+            break;
         case "lfg":
             message.delete();
             if (args[1]) { // Interpret specific lfg command
                 var x = args[1].toLowerCase();
-                if (x == 'list') {
-                    let lfglist = message.guild.roles.find("name", "LFG").members.map(m=>m.nickname);
-                    if (lfglist.length == 0) {
-                        message.channel.send('Sorry, kid. Nobody\'s LFG.');
-                        return;
-                    }
-                    let lfghigh = message.guild.roles.find("name", "LFG-high").members.map(m=>m.nickname);
-                    let lfgmid = message.guild.roles.find("name", "LFG-mid").members.map(m=>m.nickname);
-                    let lfglow = message.guild.roles.find("name", "LFG-low").members.map(m=>m.nickname);
-                    let listed = [];
-                    var embed = new Discord.RichEmbed()
-                        .setTitle('__Looking For Group__')
-                        .setColor(randColor());
-                    var title = '**Planehoppers** (Levels 13+)';
-                    if (lfghigh.length != 0) {
-                        let turds = '';
-                        for (twerp in lfghigh) {
-                            turds += lfghigh[twerp] + '\n';
-                            listed += lfghigh[twerp];
-                        }
-                        embed.addField(title, turds);
-                    } else embed.addField(title, 'Apparently they\'ve all been annihilated by spheres of varying sizes. Shame.');
-                    title = '**Crusty Jugglers** (Levels 7-12)';
-                    if (lfgmid.length != 0) {
-                        let turds = '';
-                        for (twerp in lfgmid) {
-                            turds += lfgmid[twerp] + '\n';
-                            listed += lfgmid[twerp];
-                        }
-                        embed.addField(title, turds);
-                    } else embed.addField(title, "Too busy FTBing to LFG. Tell 'em to get a life and play D&D with you!");
-                    title = '**Twerps** (Levels 2-6)';
-                    if (lfglow.length != 0) {
-                        let turds = '';
-                        for (twerp in lfglow) {
-                            turds += lfglow[twerp] + '\n';
-                            listed += lfglow[twerp];
-                        }
-                        embed.addField(title, turds);
-                    } else embed.addField(title, 'Weird. Need more meat for the grinder. Invite some friends!');
-                    if (lfglist.length != 0) {
-                        title = '**Desperately LFG** (literally any level PLZ)';
-                        let turds = '';
-                        for (twerp in lfglist) if (!listed.includes(lfglist[twerp])) turds += lfglist[twerp] + '\n';
-                        if (turds != '') embed.addField(title, turds);
-                    }
-                    message.channel.send(embed);
-                }
+                if (x == 'list') message.channel.send(listlfg(message));
                 else if (x == 'remove') removelfg(message);
                 else if (x == 'add') {
                     if (args[2]) addlfg(message, "LFG-"+args[2].toLowerCase());
@@ -87,29 +46,38 @@ bot.on("message", async (message) => {
                     else
                         removelfg(message);
                 }
-                else message.channel.send("Sorry, " + message.author.toString() + ". I don't know what the fuck that means.");
+                else message.channel.send(invalid(message));
                 
             } else { // Toggle LFG
                 if(!message.member.roles.find("name", "LFG")) addlfg(message, "LFG");
                 else removelfg(message);
             }
             break;
-        case "dm":
-            message.delete();
-            if (!message.member.roles.find("name", 'Available to DM')) {
-                message.member.addRole(message.member.guild.roles.find("name", 'Available to DM'));
-                message.channel.send(message.author.toString() + " is ready to DM!");
+        /**case "dm":
+            if (args[1]) {
+                if (args[1].toLowerCase() == 'list') {
+                    message.channel.send('Feature not yet implemented.');
+                } else message.channel.send(invalid(message));
+            } else {
+                message.delete();
+                if (!message.member.roles.find("name", 'Available to DM'))
+                    message.channel.send(message.author.toString() + " is ready to DM!");
+                else message.channel.send(message.author.toString() + " is no longer available to DM.");
+                toggleRole(message, 'Available to DM');
             }
-            else {
-                message.member.removeRole(message.member.guild.roles.find("name", 'Available to DM'));
-                message.channel.send(message.author.toString() + " is no longer available to DM.");
-            }
-            break;
+            break;**/
         case "commands":
             message.channel.send(commandList());
             break;
+        case "command":
+            message.channel.send(commandList());
+            break;
+        // v-UNDER CONSTRUCTION-v
+        case "help":
+            message.channel.send("Reply ,commands to get a list of the words I'll actually listen to.");
+            break;
         case "ping":
-            message.channel.send(ping());
+            message.channel.send(ping(message));
             break;
         case "joke":
             if (args[1]) joke(message, args[1]);
@@ -126,7 +94,7 @@ bot.on("message", async (message) => {
             if (isNorrick(message)) {
                 message.delete();
                 message.channel.send(dobidding(message));
-            }
+            } else invalid(message);
             break;
         case "invalid":
             if (isNorrick(message)) {
@@ -134,16 +102,15 @@ bot.on("message", async (message) => {
                 message.channel.send(invalid(message));
             }
             break;
-        case "boop":
-            if (isNorrick(message)) {
+        case "nonsense":
+            if (isNorrick) {
                 message.delete();
-                if (autoBoopEnabled) message.channel.send("Boop Mode: **DISABLED**. All boopers standing by.");
-                else message.channel.send("Boop Mode: **ENABLED**. Preparing loins for maximum " + bot.emojis.find("name", "boop") + '.');
-                autoBoopEnabled = !autoBoopEnabled;
-            }
+                if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
+                else message.channel.send('on');
+                nonsenseModeEnabled = !nonsenseModeEnabled;
+            } else invalid(message);
             break;
         case "test":
-            break;
         default: message.channel.send(invalid(message));
     }
 });
@@ -153,9 +120,10 @@ function commandList() {
     "**"+PREFIX +"lfg** - Toggles 'LFG' role. Add **high**, **mid**, or **low** to specify desired party level.\n" +
     "        (i.e. **"+PREFIX+"lfg high** for plane-hopping shenanigans)\n" +
     "        Use **"+PREFIX+"lfg list** to get all members currently LFG.\n" +
-    "**"+PREFIX +"dm** - Toggles 'Available to DM' role.\n" +
+    //"**"+PREFIX +"dm** - Toggles 'Available to DM' role.\n" +
     "**"+PREFIX +"r** - Rolls dice. Supports keep, drop, reroll, exploding dice, high/low selectors.\n" +
     "        (i.e. **"+PREFIX+"r 4d6kh3+3d20dl1-14*1d100ro1/2d4rr1+2d10e10 sick** is valid.)\n" +
+    "        Use **"+PREFIX+"rr** to roll several iterations. (i.e. **"+PREFIX+"rr 6 4d6kh3** for stats)\n" +
     "**"+PREFIX +"ask** - Ask Bissle a yes/no question, and he will answer.\n" +
     "**"+PREFIX +"joke** - Make Bissle tell you a joke.\n" +
     "**"+PREFIX +"ping** - Ping Bissle for testing purposes.\n")
@@ -163,19 +131,28 @@ function commandList() {
     .setColor(randColor());
 }
 
-function ping() {
+function ping(message) {
     var pings = [
         "Don't f@%$ing ping me, you d&*#s@#&&%er!",
         "You know pings are just a cry for help.",
         "I bet this is really fun for you isn't it.",
         "...",
-        "...",
         "Please stop.",
         "(╯°□°）╯︵ ┻━┻",
+        new Discord.RichEmbed().setColor(randColor())
+            .setImage('http://gifimage.net/wp-content/uploads/2017/07/critical-role-gif-6.gif'),
+        new Discord.RichEmbed().setColor(randColor())
+            .setImage('https://i.giphy.com/media/3o7WTAWQI5G3Xmym88/giphy.webp'),
+        new Discord.RichEmbed().setColor(randColor())
+            .setImage('https://i.imgur.com/QUfjucN.gif'),
+        new Discord.RichEmbed().setColor(randColor())
+            .setImage('https://media0.giphy.com/media/xUPGcKbFxXKsmeEZpu/giphy-downsized.gif'),
+            
     ]
     var x = Math.floor(Math.random()*(pings.length+1));
     if (x == pings.length) {
-        message.react(bot.emojis.find("name", "banhammer"));
+        if (Math.random() > 0.5) message.react(bot.emojis.find("name", "banhammer"));
+        else message.react(bot.emojis.find("name", "blackflare"));
         return;
     }
     return pings[x];
@@ -190,6 +167,7 @@ function tellFortune() {
         "Maybe.",
         "How the heck should I know?! I'm just a bot!",
         "¯\\_(ツ)_/¯",
+        'https://www.youtube.com/watch?v=yIhUYaLXOMs',
     ];
     return fortunes[Math.floor(Math.random() * fortunes.length)];
 }
@@ -209,26 +187,89 @@ function removelfg(message) {
     message.channel.send(message.author.toString() + " is no longer LFG.");
 }
 
-// FINISH WRITING THIS TURD
+function toggleRole(message, role) {
+    if (message.member.roles.find("name", role)) message.member.removeRole(message.member.guild.roles.find("name", role));
+    else message.member.addRole(message.member.guild.roles.find("name", role));
+}
+
+function listrole(message, role) {
+    //do something
+}
+
 function listlfg(message) {
-    let output = '';
-    return output;
+    let lfglist = message.guild.roles.find("name", "LFG").members.map(m=>m.nickname);
+    if (lfglist.length == 0) return 'Sorry, kid. Nobody\'s LFG.';
+    let lfghigh = message.guild.roles.find("name", "LFG-high").members.map(m=>m.nickname);
+    let lfgmid = message.guild.roles.find("name", "LFG-mid").members.map(m=>m.nickname);
+    let lfglow = message.guild.roles.find("name", "LFG-low").members.map(m=>m.nickname);
+    let listed = [];
+    var embed = new Discord.RichEmbed()
+        .setTitle('__Looking For Group__')
+        .setColor(randColor());
+    var title = '**Planehoppers** (Levels 13+)';
+    if (lfghigh.length != 0) {
+        let turds = '';
+        for (twerp in lfghigh) {
+            turds += lfghigh[twerp] + '\n';
+            listed += lfghigh[twerp];
+        }
+        embed.addField(title, turds);
+    } else embed.addField(title, 'Apparently they\'ve all been annihilated by spheres of varying sizes. Shame.');
+    title = '**Crusty Jugglers** (Levels 7-12)';
+    if (lfgmid.length != 0) {
+        let turds = '';
+        for (twerp in lfgmid) {
+            turds += lfgmid[twerp] + '\n';
+            listed += lfgmid[twerp];
+        }
+        embed.addField(title, turds);
+    } else embed.addField(title, "Too busy FTBing to LFG. Tell 'em to get a life and play D&D with you!");
+    title = '**Twerps** (Levels 2-6)';
+    if (lfglow.length != 0) {
+        let turds = '';
+        for (twerp in lfglow) {
+            turds += lfglow[twerp] + '\n';
+            listed += lfglow[twerp];
+        }
+        embed.addField(title, turds);
+    } else embed.addField(title, 'Weird. Need more meat for the grinder. Invite some friends!');
+    if (lfglist.length != 0) {
+        title = '**Desperately LFG** (literally any level PLZ)';
+        let turds = '';
+        for (twerp in lfglist) if (!listed.includes(lfglist[twerp])) turds += lfglist[twerp] + '\n';
+        if (turds != '') embed.addField(title, turds);
+    }
+    return embed;
 }
 
 function roll(message, args) {
     var operands = args[1].split(/[+*/-]/);
+    let deciform = /^\d+$/;
     var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)?(\d+)){0,1}\s*/;
     var results = []; var dice = []; var q = 0; var ops = []; var total = 0;
     var output = message.author.toString() + '\n';
+    if (args[2]) {
+        output += '**';
+        for (i = 2; i < args.length; i++) {
+            output += args[i];
+            if (i < args.length-1) output += ' ';
+        }
+        output += ':** '
+    }
     for (i = 0; i < operands.length; i++) {
         var sum = 0;
         if (!operands[i].includes('d')) {
+            var constant = deciform.exec(operands[i]);
+            if (!constant) {
+                message.channel.send(invalid(message));
+                return;
+            }
             sum += parseInt(operands[i]);
             output += operands[i] + ' ';
         }
         else {
             dice = dform.exec(operands[i]);
-
+            
             // Safeguards v. asshat commands
             if (!dice) {
                 message.channel.send(invalid(message));
@@ -248,6 +289,10 @@ function roll(message, args) {
             }
             output +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
         }
+        if (!operands[ops.length]) { // When a math operator isn't followed by an operand
+            message.channel.send(invalid(message));
+            return;
+        }
         if (i < operands.length-1) {
             q += operands[i].length;
             ops[i] = args[1][q]; output += ops[i] + ' ';
@@ -259,15 +304,88 @@ function roll(message, args) {
             total += ops[i-1] + sum;
         }
     }
-    if (args[2]) {
-        output += '\n**';
-        for (i = 2; i < args.length; i++) {
+    output += '\n**Total:** ';
+    message.channel.send(output + eval(total));
+}
+
+function rollLots(message, args) {
+    let deciform = /^\d+$/;
+    var iterations = deciform.exec(args[1]);
+    if (!iterations) {
+        message.channel.send(invalid(message));
+        return;
+    }
+    var operands = args[2].split(/[+*/-]/);
+    var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)?(\d+)){0,1}\s*/;
+    var results = []; var dice = []; var q = 0; var ops = []; var totals = [];
+    var output = message.author.toString() + '\nRolling ';
+    if (args[3]) {
+        output += '**';
+        for (i = 3; i < args.length; i++) {
             output += args[i];
             if (i < args.length-1) output += ' ';
         }
-        output += ':** '
-    } else output += '\n**Total:** ';
-    message.channel.send(output + eval(total));
+        output += ':**\n'
+    } else output += iterations + ' iterations:\n';
+    for (its = 0; its < iterations; its++) {
+        for (i = 0; i < operands.length; i++) {
+            var sum = 0;
+            if (!operands[i].includes('d')) {
+                var constant = deciform.exec(operands[i]);
+                if (!constant) {
+                    message.channel.send(invalid(message));
+                    return;
+                }
+                sum += parseInt(operands[i]);
+                output += operands[i] + ' ';
+            }
+            else {
+                dice = dform.exec(operands[i]);
+                
+                // Safeguards v. asshat commands
+                if (!dice) {
+                    message.channel.send(invalid(message));
+                    return;
+                }
+                if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1) {
+                    message.channel.send(invalid(message));
+                    return;
+                }
+                results[i] = rollDice(dice[1], dice[2], message);
+
+                // Operand function goes here
+                results[i] = diceOps(dice, results[i], message);
+                
+                for (j = 0; j < results[i][0].length; j++) {
+                    sum += results[i][0][j];
+                }
+                output +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
+            }
+            if (!operands[ops.length]) { // When a math operator isn't followed by an operand
+                message.channel.send(invalid(message));
+                return;
+            }
+            if (i < operands.length-1) {
+                q += operands[i].length;
+                ops[i] = args[1][q]; output += ops[i] + ' ';
+                q++;
+            }
+            totals[its] = 0;
+            if (i == 0)
+                totals[its] += sum;
+            else {
+                totals[its] += ops[i-1] + sum;
+            }
+            totals[its] = eval(totals[its]);
+            output += '= ' + totals[its] + '\n';
+        }
+    }
+    output += '**Total:** ';
+    var total = 0;
+    for (t = 0; t < totals.length; t++) {
+        total += totals[t];
+    }
+    message.channel.send(output + total);
 }
 
 function rollDice(x, n, message) {
@@ -279,7 +397,11 @@ function rollDice(x, n, message) {
             results[0][k] = Math.floor(Math.random()*n)+1;
             // if sender says 'please', roll really good maybe
             if (message.content.includes('please')) {
-                if(Math.random() > 0.99)
+                if(Math.random() > 0)
+                    results[0][k] = Math.min(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
+            }
+            else if (isNorrick(message)){
+                if(Math.random() > 0.8)
                     results[0][k] = Math.max(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
             }
         }
@@ -647,6 +769,8 @@ function invalid(message) {
         "WHAT DID YOU CALL ME YOU LITTLE TWERP?!",
         "That didn't make a lick of sense.",
         "Sorry, I don't speak abyssal.",
+        "Sorry, " + message.author.toString() + ". I don't know what the fuck that means.",
+        new Discord.RichEmbed().setImage('https://i.imgur.com/6DN4q4L.gif').setColor(randColor()),
     ];
     let x = Math.floor(Math.random()*(responses.length+1));
     if (x == responses.length) {
@@ -681,6 +805,18 @@ function dobidding(message) {
 function autoBoop(message) {
     if (message.member.roles.find("name", 'Prude')) {
         message.react(bot.emojis.find("name", "boop"));
+        return;
+    }
+}
+
+function alphabet(message) {
+    if (message.member.roles.find("name", 'BUTTHEAD TWERKER')) {
+        let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        message.member.setNickname(alphabet[alphaLet++]).catch(function(error) {
+            console.log(error);
+        });
+        console.log(message.member.nickname);
+        alphaLet = alphaLet%26;
         return;
     }
 }
