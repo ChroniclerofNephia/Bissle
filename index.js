@@ -1,5 +1,6 @@
 const Discord = require("discord.js");
 const settings = require("./botsettings.json");
+const funcs = module.require('./funcs.js');
 const fs = require('fs');
 
 const PREFIX = settings.prefix;
@@ -63,8 +64,6 @@ bot.on("message", async (message) => {
                 }
                 break;**/
             case "commands":
-                message.channel.send(commandList());
-                break;
             case "command":
                 message.channel.send(commandList());
                 break;
@@ -72,30 +71,26 @@ bot.on("message", async (message) => {
             case "help":
                 message.channel.send("Reply ,commands to get a list of the words I'll actually listen to.");
                 break;
-            case "ping":
-                message.channel.send(ping(message));
-                break;
             case "dobidding":
-                if (isNorrick(message)) {
+                if (funcs.isNorrick(message)) {
                     message.delete();
                     message.channel.send(dobidding(message));
-                } else invalid(message);
-                break;
-            case "invalid":
-                if (isNorrick(message)) {
-                    message.delete();
-                    message.channel.send(invalid(message));
-                }
+                } else funcs.invalid(message);
                 break;
             case "nonsense":
-                if (isNorrick) {
+                if (funcs.isNorrick(message)) {
                     message.delete();
                     if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
                     else message.channel.send('on');
                     nonsenseModeEnabled = !nonsenseModeEnabled;
-                } else message.channel.send(invalid(message));
+                } else funcs.invalid(message);
                 break;
-            default: message.channel.send(invalid(message));
+            case "test":
+                break;
+            case "invalid":
+                if (!isNorrick(message)) break;
+                message.delete();
+            default: funcs.invalid(message);
         }
 });
 
@@ -112,67 +107,7 @@ function commandList() {
     "**"+PREFIX +"joke** - Make Bissle tell you a joke.\n" +
     "**"+PREFIX +"ping** - Ping Bissle for testing purposes.\n")
     .setFooter("More functionality will be added as Loreseeker Norrick sees fit.")
-    .setColor(randColor());
-}
-
-function ping(message) {
-    var pings = [
-        "Don't f@%$ing ping me, you d&*#s@#&&%er!",
-        "You know pings are just a cry for help.",
-        "I bet this is really fun for you isn't it.",
-        "...",
-        "Please stop.",
-        "(╯°□°）╯︵ ┻━┻",
-        new Discord.RichEmbed().setColor(randColor())
-            .setImage('http://gifimage.net/wp-content/uploads/2017/07/critical-role-gif-6.gif'),
-        new Discord.RichEmbed().setColor(randColor())
-            .setImage('https://i.giphy.com/media/3o7WTAWQI5G3Xmym88/giphy.webp'),
-        new Discord.RichEmbed().setColor(randColor())
-            .setImage('https://i.imgur.com/QUfjucN.gif'),
-        new Discord.RichEmbed().setColor(randColor())
-            .setImage('https://media0.giphy.com/media/xUPGcKbFxXKsmeEZpu/giphy-downsized.gif'),
-            
-    ]
-    var x = Math.floor(Math.random()*(pings.length+1));
-    if (x == pings.length) {
-        if (Math.random() > 0.5) message.react(bot.emojis.find("name", "banhammer"));
-        else message.react(bot.emojis.find("name", "blackflare"));
-        return;
-    }
-    return pings[x];
-}
-
-function randColor() {
-    return '#'+Math.floor(Math.random()*16777215).toString(16);
-}
-
-function invalid(message) {
-    var responses = [
-        "Speak up, kiddo! I didn't understand a word you said.",
-        "WHAT DID YOU CALL ME YOU LITTLE TWERP?!",
-        "That didn't make a lick of sense.",
-        "Sorry, I don't speak abyssal.",
-        "Sorry, " + message.author.toString() + ". I don't know what the fuck that means.",
-        new Discord.RichEmbed().setImage('https://i.imgur.com/6DN4q4L.gif').setColor(randColor()),
-    ];
-    let x = Math.floor(Math.random()*(responses.length+1));
-    if (x == responses.length) {
-        var c = 10;
-        var interval = setInterval (function () {
-            // use the message's channel (TextChannel) to send a new message
-            if (c == 10) {
-                message.channel.send('**SERVER RESET IN T-MINUS 10...**');
-                c--;
-            }
-            message.channel.send('**'+c--+'...**')
-            .catch(console.error); // add error handling here
-            if (c == 0) {
-                clearInterval(interval);
-                return;
-            }
-        }, 1000);
-    }
-    return responses[x];
+    .setColor(funcs.randColor());
 }
 
 function dobidding(message) {
@@ -202,10 +137,6 @@ function alphabet(message) {
         alphaLet = alphaLet%26;
         return;
     }
-}
-
-function isNorrick(message) {
-    return (message.member.nickname == 'Loreseeker Norrick') && message.member.roles.find("name" , "Admins");
 }
 
 bot.login(settings.token);
