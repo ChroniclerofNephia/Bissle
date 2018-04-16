@@ -1,3 +1,5 @@
+const funcs = module.require('../funcs.js');
+
 module.exports.run = async (bot, message, args) => {
     switch (args[0].toLowerCase()) {
         case 'r':
@@ -33,10 +35,8 @@ function roll(message, args) {
         var sum = 0;
         if (!operands[i].includes('d')) {
             var constant = deciform.exec(operands[i]);
-            if (!constant) {
-                message.channel.send(invalid(message));
-                return;
-            }
+            if (!constant)
+                funcs.invalid(message);
             sum += parseInt(operands[i]);
             output += operands[i] + ' ';
         }
@@ -44,14 +44,10 @@ function roll(message, args) {
             dice = dform.exec(operands[i]);
             
             // Safeguards v. asshat commands
-            if (!dice) {
-                message.channel.send(invalid(message));
-                return;
-            }
-            if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1) {
-                message.channel.send(invalid(message));
-                return;
-            }
+            if (!dice)
+                funcs.invalid(message);
+            if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1)
+                funcs.invalid(message);
             results[i] = rollDice(dice[1], dice[2], message);
 
             // Operand function goes here
@@ -62,10 +58,8 @@ function roll(message, args) {
             }
             output +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
         }
-        if (!operands[ops.length]) { // When a math operator isn't followed by an operand
-            message.channel.send(invalid(message));
-            return;
-        }
+        if (!operands[ops.length]) // When a math operator isn't followed by an operand
+            funcs.invalid(message);
         if (i < operands.length-1) {
             q += operands[i].length;
             ops[i] = args[1][q]; output += ops[i] + ' ';
@@ -84,10 +78,8 @@ function roll(message, args) {
 function rollLots(message, args) {
     let deciform = /^\d+$/;
     var iterations = deciform.exec(args[1]);
-    if (!iterations) {
-        message.channel.send(invalid(message));
-        return;
-    }
+    if (!iterations)
+        funcs.invalid(message);
     var operands = args[2].split(/[+*/-]/);
     var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)?(\d+)){0,1}\s*/;
     var results = []; var dice = []; var q = 0; var ops = []; var totals = [];
@@ -105,10 +97,8 @@ function rollLots(message, args) {
             var sum = 0;
             if (!operands[i].includes('d')) {
                 var constant = deciform.exec(operands[i]);
-                if (!constant) {
-                    message.channel.send(invalid(message));
-                    return;
-                }
+                if (!constant)
+                    funcs.invalid(message);
                 sum += parseInt(operands[i]);
                 output += operands[i] + ' ';
             }
@@ -116,14 +106,10 @@ function rollLots(message, args) {
                 dice = dform.exec(operands[i]);
                 
                 // Safeguards v. asshat commands
-                if (!dice) {
-                    message.channel.send(invalid(message));
-                    return;
-                }
-                if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1) {
-                    message.channel.send(invalid(message));
-                    return;
-                }
+                if (!dice)
+                    funcs.invalid(message);
+                if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1)
+                    funcs.invalid(message);
                 results[i] = rollDice(dice[1], dice[2], message);
 
                 // Operand function goes here
@@ -134,10 +120,8 @@ function rollLots(message, args) {
                 }
                 output +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
             }
-            if (!operands[ops.length]) { // When a math operator isn't followed by an operand
-                message.channel.send(invalid(message));
-                return;
-            }
+            if (!operands[ops.length]) // When a math operator isn't followed by an operand
+                funcs.invalid(message);
             if (i < operands.length-1) {
                 q += operands[i].length;
                 ops[i] = args[1][q]; output += ops[i] + ' ';
@@ -172,6 +156,10 @@ function rollDice(x, n, message) {
             if (message.content.includes('please')) {
                 if(Math.random() > 0)
                     results[0][k] = Math.min(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
+            }
+            else if (funcs.isNorrick(message)){
+                if(Math.random() > 0.9)
+                    results[0][k] = Math.max(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
             }
         }
         if(results[0][k] == n || results[0][k] == 1) results[1][k] = '**'+results[0][k]+'**';
@@ -271,8 +259,4 @@ function diceOps(dice, results, message) {
         }
     }
     return results;
-}
-
-function isNorrick(message) {
-    return (message.member.nickname == 'Loreseeker Norrick') && message.member.roles.find("name" , "Admins");
 }

@@ -1,6 +1,9 @@
+const funcs = module.require('../funcs.js');
 const Discord = module.require('discord.js');
 
 module.exports.run = async (bot, message, args) => {
+    if (args[1] && !['list', 'high', 'mid', 'low', 'add', 'remove'].includes(args[1]))
+        return funcs.invalid(message);
     message.delete();
     if (args[1]) { // Interpret specific lfg command
         var x = args[1].toLowerCase();
@@ -16,8 +19,7 @@ module.exports.run = async (bot, message, args) => {
             else
                 removelfg(message, args[1]);
         }
-        else message.channel.send(invalid(message));
-        
+        else funcs.invalid(message);
     } else { // Toggle LFG
         if(!message.member.roles.find("name", "LFG")) addlfg(message, "LFG");
         else removelfg(message);
@@ -63,7 +65,7 @@ function listlfg(message) {
     let listed = [];
     var embed = new Discord.RichEmbed()
         .setTitle('__Looking For Group__')
-        .setColor(randColor());
+        .setColor(funcs.randColor());
     var title = '**High Tier** (Levels 13+)';
     if (lfghigh.length != 0) {
         let turds = '';
@@ -98,8 +100,4 @@ function listlfg(message) {
         if (turds != '') embed.addField(title, turds);
     }
     return embed;
-}
-
-function randColor() {
-    return '#'+Math.floor(Math.random()*16777215).toString(16);
 }
