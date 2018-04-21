@@ -8,6 +8,8 @@ var nonsenseModeEnabled = false; var alphaLet = 6;
 
 const bot = new Discord.Client({disableEveryone: true});
 bot.commands = new Discord.Collection();
+bot.mutes = require('./mutes.json');
+bot.bank = require('./bank.json');
 
 fs.readdir("./cmds/", (err, files) => {
     if(err) console.error(err);
@@ -27,6 +29,27 @@ fs.readdir("./cmds/", (err, files) => {
 
 bot.on("ready", async () => {
     console.log("Bissle is ready to rumble!");
+
+    bot.setInterval(() => { // Check mute timer
+        for (let i in bot.mutes) {
+            let time = bot.mutes[i].time;
+            let guildId = bot.mutes[i].guild;
+            let guild = bot.guilds.get(guildId);
+            let member = guild.members.get(i);
+            let role = guild.roles.find(r => r.name === 'Silenced');
+            if (!role || !guild) continue;
+
+            if (Date.now() > time) { // Time's up!
+                member.removeRole(role);
+                delete bot.mutes[i];
+
+                fs.writeFile('./mutes.json', JSON.stringify(bot.mutes), err => {
+                    if (err) throw err;
+                    console.log('The Silence on ' + member.toString() + ' has been dispelled!');
+                });
+            }
+        }
+    }, 5000)
 });
 
 /**bot.on("guildMemberAdd", function (member) {
@@ -34,14 +57,15 @@ bot.on("ready", async () => {
 });**/
 
 bot.on("message", async (message) => {
-    if (message.author.equals(bot.user)) return;
     if (nonsenseModeEnabled) {
         autoBoop(message);
         alphabet(message);
     }
+    if (message.author.equals(bot.user)) return;
     if (!message.content.startsWith(PREFIX)) return;
 
     let args = message.content.substring(PREFIX.length).split(" ");
+    for (let arg in args) while (args[arg] == '') args.splice(arg, 1);
     let cmd = bot.commands.get(args[0].toLowerCase());
     if (cmd) cmd.run(bot, message, args);
     else
@@ -63,6 +87,9 @@ bot.on("message", async (message) => {
                     toggleRole(message, 'Available to DM');
                 }
                 break;**/
+            case 'list':
+                bot.commands.get('lfg').run(bot, message, ['lfg', 'list']);
+                break;
             case "commands":
             case "command":
                 message.channel.send(commandList());
@@ -70,6 +97,12 @@ bot.on("message", async (message) => {
             // v-UNDER CONSTRUCTION-v
             case "help":
                 message.channel.send("Reply ,commands to get a list of the words I'll actually listen to.");
+                break;
+            case "charinfo":
+            case "reward":
+            case "initiate":
+            case "retire":
+                bot.commands.get('charlog').run(bot, message, args);
                 break;
             case "dobidding":
                 if (funcs.isNorrick(message)) {
@@ -80,13 +113,12 @@ bot.on("message", async (message) => {
             case "nonsense":
                 if (funcs.isNorrick(message)) {
                     message.delete();
-                    if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
-                    else message.channel.send('on');
+                    if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE DISABLED**: Boring normality stabilized.');
+                    else message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
                     nonsenseModeEnabled = !nonsenseModeEnabled;
                 } else funcs.invalid(message);
                 break;
-            case "test":
-                break;
+            
             case "invalid":
                 if (!isNorrick(message)) break;
                 message.delete();
@@ -96,7 +128,7 @@ bot.on("message", async (message) => {
 
 function commandList() {
     return new Discord.RichEmbed().addField("**Bissle Commands**",
-    "**"+PREFIX +"lfg** - Toggles 'LFG' role. Add **high**, **mid**, or **low** to specify desired party level.\n" +
+    "**"+PREFIX +"lfg** - Toggles 'LFG' role. Add **high**, **mid**, **low**, or **pbp** to specify game type.\n" +
     "        (i.e. **"+PREFIX+"lfg high** for plane-hopping shenanigans)\n" +
     "        Use **"+PREFIX+"lfg list** to get all members currently LFG.\n" +
     //"**"+PREFIX +"dm** - Toggles 'Available to DM' role.\n" +
@@ -121,14 +153,14 @@ function dobidding(message) {
 }
 
 function autoBoop(message) {
-    if (message.member.roles.find("name", 'Prude')) {
+    if (message.channel.name == 'general-ooc') {
         message.react(bot.emojis.find("name", "boop"));
         return;
     }
 }
 
 function alphabet(message) {
-    if (message.member.roles.find("name", 'BUTTHEAD TWERKER')) {
+    if (message.member.roles.find("name", 'BUTTHEAD TWERKER') && message.member.roles.find("name", 'Balance DM')) {
         let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         message.member.setNickname(alphabet[alphaLet++]).catch(function(error) {
             console.log(error);

@@ -31,8 +31,8 @@ module.exports = {
         }, 1000);
     },
     
-    isNorrick: function(message) {
-        return (message.member.nickname == 'Loreseeker Norrick') && message.member.roles.find("name" , "Admins");
+    isNorrick: function(msg) {
+        return (msg.member.id == '287716869933105154');
     }
 }
 

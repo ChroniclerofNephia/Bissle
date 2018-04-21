@@ -3,13 +3,13 @@ const funcs = module.require('../funcs.js');
 module.exports.run = async (bot, message, args) => {
     switch (args[0].toLowerCase()) {
         case 'r':
-            roll(message, args);
+            rollOnce(message, args);
             break;
         case 'rr':
             rollLots(message, args);
             break;
         default:
-            message.channel.send('Use **,r** to roll dice, or **,commands** for more information.');
+            message.channel.send('Use **,r** to roll one iteration, **,rr** for multiples, or **,commands** for more information.');
     }
 }
 
@@ -17,158 +17,116 @@ module.exports.help = {
     name: 'dice'
 }
 
-function roll(message, args) {
-    var operands = args[1].split(/[+*/-]/);
-    let deciform = /^\d+$/;
-    var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)?(\d+)){0,1}\s*/;
-    var results = []; var dice = []; var q = 0; var ops = []; var total = 0;
-    var output = message.author.toString() + '\n';
-    if (args[2]) {
+function rollOnce(message, args) { // Formats results of a single rollset
+    var output = message.author.toString() + '\n'
+    let stringNsum = roll(message, args[1]); // tuple of rollset string and int sum
+    if (!stringNsum[0]) return; // Encountered bad command in roll function
+    if (args[2]) { // add roll descriptor
         output += '**';
-        for (i = 2; i < args.length; i++) {
+        for (let i = 2; i < args.length; i++) {
             output += args[i];
             if (i < args.length-1) output += ' ';
         }
         output += ':** '
     }
-    for (i = 0; i < operands.length; i++) {
-        var sum = 0;
-        if (!operands[i].includes('d')) {
-            var constant = deciform.exec(operands[i]);
-            if (!constant)
-                funcs.invalid(message);
-            sum += parseInt(operands[i]);
-            output += operands[i] + ' ';
-        }
-        else {
-            dice = dform.exec(operands[i]);
-            
-            // Safeguards v. asshat commands
-            if (!dice)
-                funcs.invalid(message);
-            if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1)
-                funcs.invalid(message);
-            results[i] = rollDice(dice[1], dice[2], message);
-
-            // Operand function goes here
-            results[i] = diceOps(dice, results[i], message);
-            
-            for (j = 0; j < results[i][0].length; j++) {
-                sum += results[i][0][j];
-            }
-            output +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
-        }
-        if (!operands[ops.length]) // When a math operator isn't followed by an operand
-            funcs.invalid(message);
-        if (i < operands.length-1) {
-            q += operands[i].length;
-            ops[i] = args[1][q]; output += ops[i] + ' ';
-            q++;
-        }
-        if (i == 0)
-            total += sum;
-        else {
-            total += ops[i-1] + sum;
-        }
-    }
-    output += '\n**Total:** ';
-    message.channel.send(output + eval(total));
+    output += stringNsum[0] + '\n**Total:** ' + stringNsum[1];
+    message.channel.send(output);
 }
 
-function rollLots(message, args) {
+function rollLots(message, args) { // Formats results of multiple rollsets
+    // Determine number of iterations
     let deciform = /^\d+$/;
     var iterations = deciform.exec(args[1]);
-    if (!iterations)
-        funcs.invalid(message);
-    var operands = args[2].split(/[+*/-]/);
-    var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)?(\d+)){0,1}\s*/;
-    var results = []; var dice = []; var q = 0; var ops = []; var totals = [];
-    var output = message.author.toString() + '\nRolling ';
-    if (args[3]) {
+    if (!iterations) return funcs.invalid(message);
+    iterations = iterations[0];
+
+    // Format output before rolling
+    var output = message.author.toString() + '\nRolling '
+    if (args[3]) { // add roll descriptor
         output += '**';
-        for (i = 3; i < args.length; i++) {
+        for (let i = 3; i < args.length; i++) {
             output += args[i];
             if (i < args.length-1) output += ' ';
         }
-        output += ':**\n'
+        output += ':**\n';
     } else output += iterations + ' iterations:\n';
-    for (its = 0; its < iterations; its++) {
-        for (i = 0; i < operands.length; i++) {
-            var sum = 0;
-            if (!operands[i].includes('d')) {
-                var constant = deciform.exec(operands[i]);
-                if (!constant)
-                    funcs.invalid(message);
-                sum += parseInt(operands[i]);
-                output += operands[i] + ' ';
-            }
-            else {
-                dice = dform.exec(operands[i]);
-                
-                // Safeguards v. asshat commands
-                if (!dice)
-                    funcs.invalid(message);
-                if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1)
-                    funcs.invalid(message);
-                results[i] = rollDice(dice[1], dice[2], message);
 
-                // Operand function goes here
-                results[i] = diceOps(dice, results[i], message);
-                
-                for (j = 0; j < results[i][0].length; j++) {
-                    sum += results[i][0][j];
-                }
-                output +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
-            }
-            if (!operands[ops.length]) // When a math operator isn't followed by an operand
-                funcs.invalid(message);
-            if (i < operands.length-1) {
-                q += operands[i].length;
-                ops[i] = args[1][q]; output += ops[i] + ' ';
-                q++;
-            }
-            totals[its] = 0;
-            if (i == 0)
-                totals[its] += sum;
-            else {
-                totals[its] += ops[i-1] + sum;
-            }
-            totals[its] = eval(totals[its]);
-            output += '= ' + totals[its] + '\n';
-        }
+    // Roll dice several times, format each set result, track grand total
+    let sum = 0;
+    for (let i = 0; i < iterations; i++) {
+        let stringNsum = roll(message, args[2]);
+        if (!stringNsum[0]) return; // Encountered bad command in roll function
+        output += stringNsum[0] + ' = ' + stringNsum[1] + '\n';
+        sum += stringNsum[1];
     }
-    output += '**Total:** ';
-    var total = 0;
-    for (t = 0; t < totals.length; t++) {
-        total += totals[t];
-    }
-    message.channel.send(output + total);
+
+    // Display total
+    output += '**Total:** ' + sum;
+    message.channel.send(output);
 }
 
-function rollDice(x, n, message) {
+function roll(message, rollstring) { // Parses, interprets operators, returns results
+    var operands = rollstring.split(/[+*/-]/);
+    var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)(\d+))*\s*/;
+    var results = []; var q = 0; var ops = []; var total = '';
+    var result = '';
+    for (i = 0; i < operands.length; i++) { // For each operand
+        var opsum = 0;
+        if (!operands[i].includes('d')) { // If not dice, then must be constant
+            if (isNaN(operands[i])) // If not constant, reject
+                return funcs.invalid(message);
+            result += operands[i] + ' ';
+            opsum += eval(operands[i]);
+        }
+        else { // Must be dice!
+            var dice = dform.exec(operands[i]);
+            // Safeguards v. asshat commands
+            if (!dice||!dice[2]) // No dice to parse or no dice type given
+                return funcs.invalid(message);
+            if (dice[2] == 1 && dice[3] == 'e' && dice[4] == 1) // Infinite exploding 1's
+                return funcs.invalid(message);
+            results[i] = rollDice(dice[1], dice[2], message);
+
+            // Interpret optional operands
+            results[i] = diceOps(dice, results[i], message);
+            
+            // Append operand to string, add total to opsum.
+            for (j = 0; j < results[i][0].length; j++) {
+                opsum += results[i][0][j];
+            }
+            result +=  dice[1] + 'd' + dice[2] + ' (' + results[i][1].join(', ') + ') ';
+        }
+
+        if (!operands[ops.length]) // When a math operator isn't followed by an operand
+            return funcs.invalid(message);
+        
+        if (i < operands.length-1) { // If operand is not last one, append to string
+            q += operands[i].length;
+            ops[i] = rollstring[q]; result += ops[i] + ' ';
+            q++;
+        }
+        if (i == 0)
+            total += opsum;
+        else {
+            total += ops[i-1] + opsum;
+        }
+    }
+    return [result, eval(total)];
+}
+
+function rollDice(x, n, message) { // Calculates individual dice operands
     if (x == '') x = 1;
     var results = [[], []];
     for (k = 0; k < x; k++) {
         if (n == 0) results[0][k] = 0;
-        else {
-            results[0][k] = Math.floor(Math.random()*n)+1;
-            // if sender says 'please', roll really good maybe
-            if (message.content.includes('please')) {
-                if(Math.random() > 0)
-                    results[0][k] = Math.min(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
-            }
-            else if (funcs.isNorrick(message)){
-                if(Math.random() > 0.9)
-                    results[0][k] = Math.max(results[0][k], Math.floor(Math.random()*n)+1, Math.floor(Math.random()*n)+1);
-            }
-        }
+        else results[0][k] = Math.floor(Math.random()*n)+1;
         if(results[0][k] == n || results[0][k] == 1) results[1][k] = '**'+results[0][k]+'**';
         else results[1][k] = ''+results[0][k];
     }
     return results;
 }
 
-function diceOps(dice, results, message) {
+function diceOps(dice, results, message) { // Applies special die operators
     if (dice[3] == "dl" || dice[3] == "kh") {
         if (dice[3] == 'kh')
             dice[4] = dice[1]-dice[4];

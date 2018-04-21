@@ -2,9 +2,10 @@ const funcs = module.require('../funcs.js');
 const Discord = module.require('discord.js');
 
 module.exports.run = async (bot, message, args) => {
-    if (args[1] && !['list', 'high', 'mid', 'low', 'add', 'remove'].includes(args[1]))
+    if (message.channel.type === 'dm') return;
+    if (message.channel.name != 'lfg') return message.channel.send('Please LFG in ' + bot.channels.get('371684792988860417') + '.');
+    if (args[1] && !['list', 'high', 'mid', 'low', 'add', 'remove', 'pbp'].includes(args[1]))
         return funcs.invalid(message);
-    message.delete();
     if (args[1]) { // Interpret specific lfg command
         var x = args[1].toLowerCase();
         if (x == 'list') message.channel.send(listlfg(message));
@@ -13,7 +14,7 @@ module.exports.run = async (bot, message, args) => {
             if (args[2]) addlfg(message, "LFG-"+args[2].toLowerCase());
             else addlfg(message, "LFG");
         }
-        else if (x == 'high' || x == 'mid' || x == 'low') {
+        else if (x == 'high' || x == 'mid' || x == 'low' || x == 'pbp') {
             if(!message.member.roles.find("name", "LFG-"+x))
                 addlfg(message, "LFG-"+x);
             else
@@ -24,6 +25,7 @@ module.exports.run = async (bot, message, args) => {
         if(!message.member.roles.find("name", "LFG")) addlfg(message, "LFG");
         else removelfg(message);
     }
+    message.delete();
 }
 
 module.exports.help = {
@@ -31,18 +33,19 @@ module.exports.help = {
 }
 
 function addlfg(message, role) {
-    if (role == "LFG-high" || role == "LFG-mid" || role == "LFG-low")
+    if (role == "LFG-high" || role == "LFG-mid" || role == "LFG-low" || role == 'LFG-pbp')
         message.member.addRole(message.member.guild.roles.find("name", role));
     message.member.addRole(message.member.guild.roles.find("name", "LFG"));
     message.channel.send(message.author.toString() + " is LFG!");
 }
 
 function removelfg(message, tier='') {
-    if (tier == 'low' || tier == 'mid' || tier == 'high')
+    if (tier == 'low' || tier == 'mid' || tier == 'high' || tier == 'pbp')
         return message.member.removeRole(message.member.guild.roles.find("name", "LFG-"+tier));
     message.member.removeRole(message.member.guild.roles.find("name", "LFG-high"));
     message.member.removeRole(message.member.guild.roles.find("name", "LFG-mid"));
     message.member.removeRole(message.member.guild.roles.find("name", "LFG-low"));
+    message.member.removeRole(message.member.guild.roles.find("name", "LFG-pbp"));
     message.member.removeRole(message.member.guild.roles.find("name", "LFG"));
     message.channel.send(message.author.toString() + " is no longer LFG.");
 }
@@ -52,16 +55,13 @@ function toggleRole(message, role) {
     else message.member.addRole(message.member.guild.roles.find("name", role));
 }
 
-function listrole(message, role) {
-    //do something
-}
-
 function listlfg(message) {
     let lfglist = message.guild.roles.find("name", "LFG").members.map(m=>m.nickname);
     if (lfglist.length == 0) return 'Sorry, kid. Nobody\'s LFG.';
     let lfghigh = message.guild.roles.find("name", "LFG-high").members.map(m=>m.nickname);
     let lfgmid = message.guild.roles.find("name", "LFG-mid").members.map(m=>m.nickname);
     let lfglow = message.guild.roles.find("name", "LFG-low").members.map(m=>m.nickname);
+    let lfgpbp = message.guild.roles.find("name", "LFG-pbp").members.map(m=>m.nickname);
     let listed = [];
     var embed = new Discord.RichEmbed()
         .setTitle('__Looking For Group__')
@@ -93,6 +93,15 @@ function listlfg(message) {
         }
         embed.addField(title, turds);
     } else embed.addField(title, 'Weird. Need more meat for the grinder. Invite some friends!');
+    var title = '**PBP Please**';
+    if (lfgpbp.length != 0) {
+        let turds = '';
+        for (twerp in lfgpbp) {
+            turds += lfgpbp[twerp] + '\n';
+            listed += lfgpbp[twerp];
+        }
+        embed.addField(title, turds);
+    } else embed.addField(title, 'Sorry, kid. Folks like their live games.');
     if (lfglist.length != 0) {
         title = '**Desperately LFG** (literally any level PLZ)';
         let turds = '';

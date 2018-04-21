@@ -9,10 +9,6 @@ let pings = [
     "Please stop.",
     "(╯°□°）╯︵ ┻━┻",
     new Discord.RichEmbed().setColor(funcs.randColor())
-        .setImage('http://gifimage.net/wp-content/uploads/2017/07/critical-role-gif-6.gif'),
-    new Discord.RichEmbed().setColor(funcs.randColor())
-        .setImage('https://i.giphy.com/media/3o7WTAWQI5G3Xmym88/giphy.webp'),
-    new Discord.RichEmbed().setColor(funcs.randColor())
         .setImage('https://i.imgur.com/QUfjucN.gif'),
     new Discord.RichEmbed().setColor(funcs.randColor())
         .setImage('https://media0.giphy.com/media/xUPGcKbFxXKsmeEZpu/giphy-downsized.gif'),
