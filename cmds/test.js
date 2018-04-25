@@ -3,6 +3,7 @@ const snekfetch = require("snekfetch");
 const Discord = require('discord.js');
 
 module.exports.run = async (bot, message, args) => {
+    if (!isNorrick(message)) return funcs.invalid(message);
     snekfetch .get(api).then(r => {
         let body = r.body;
         let id = Number(args[1]);

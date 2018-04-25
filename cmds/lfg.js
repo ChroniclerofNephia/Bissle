@@ -1,5 +1,7 @@
 const funcs = module.require('../funcs.js');
 const Discord = module.require('discord.js');
+const sql = require('sqlite');
+sql.open('./charlog.sqlite');
 
 module.exports.run = async (bot, message, args) => {
     if (message.channel.type === 'dm') return;
@@ -22,7 +24,18 @@ module.exports.run = async (bot, message, args) => {
         }
         else funcs.invalid(message);
     } else { // Toggle LFG
-        if(!message.member.roles.find("name", "LFG")) addlfg(message, "LFG");
+        if(!message.member.roles.find("name", "LFG")) {
+            sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
+                if (!row) return addlfg(message, "LFG");
+                else {
+                    if (row.level < 7) addlfg(message, "LFG-low");
+                    else if (row.level < 13) addlfg(message, "LFG-mid");
+                    else addlfg(message, "LFG-high");
+                }
+            }, err => {
+                addlfg(message, "LFG");
+            });
+        }
         else removelfg(message);
     }
     message.delete();

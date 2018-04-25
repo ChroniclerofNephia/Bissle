@@ -9,7 +9,6 @@ var nonsenseModeEnabled = false; var alphaLet = 6;
 const bot = new Discord.Client({disableEveryone: true});
 bot.commands = new Discord.Collection();
 bot.mutes = require('./mutes.json');
-bot.bank = require('./bank.json');
 
 fs.readdir("./cmds/", (err, files) => {
     if(err) console.error(err);
@@ -98,12 +97,18 @@ bot.on("message", async (message) => {
             case "help":
                 message.channel.send("Reply ,commands to get a list of the words I'll actually listen to.");
                 break;
-            case "charinfo":
-            case "reward":
+            // CHARLOG BLOCK
+            case "adjust":
+            case "wipe":
             case "initiate":
             case "retire":
+            case "transfer":
+            case "spend":
+            case "charinfo":
+            case "reward":
                 bot.commands.get('charlog').run(bot, message, args);
                 break;
+            // NORRICK ONLY
             case "dobidding":
                 if (funcs.isNorrick(message)) {
                     message.delete();
@@ -118,9 +123,11 @@ bot.on("message", async (message) => {
                     nonsenseModeEnabled = !nonsenseModeEnabled;
                 } else funcs.invalid(message);
                 break;
-            
+            case "testo":
+                message.channel.send('https://www.youtube.com/watch?v=n5diMImYIIA');
+                break;
             case "invalid":
-                if (!isNorrick(message)) break;
+                if (!funcs.isNorrick(message)) break;
                 message.delete();
             default: funcs.invalid(message);
         }
