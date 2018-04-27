@@ -4,11 +4,12 @@ const funcs = module.require('./funcs.js');
 const fs = require('fs');
 
 const PREFIX = settings.prefix;
-var nonsenseModeEnabled = false; var alphaLet = 6;
+var nonsenseModeEnabled = false; var alphaLet = 6; var prevNick = 'Mix-Master ICE';
 
 const bot = new Discord.Client({disableEveryone: true});
 bot.commands = new Discord.Collection();
 bot.mutes = require('./mutes.json');
+bot.cmd_desc = require('./cmd_desc.json');
 
 fs.readdir("./cmds/", (err, files) => {
     if(err) console.error(err);
@@ -58,19 +59,22 @@ bot.on("ready", async () => {
 bot.on("message", async (message) => {
     if (nonsenseModeEnabled) {
         autoBoop(message);
-        alphabet(message);
+        /* alphabet(message); */
+        tag(message);
     }
     if (message.author.equals(bot.user)) return;
     if (!message.content.startsWith(PREFIX)) return;
 
     let args = message.content.substring(PREFIX.length).split(" ");
     for (let arg in args) while (args[arg] == '') args.splice(arg, 1);
+    let good = funcs.hasPermission(args[0].toLowerCase(), message.member)
+    if (!good) return funcs.invalid(message);
     let cmd = bot.commands.get(args[0].toLowerCase());
     if (cmd) cmd.run(bot, message, args);
     else
         switch (args[0].toLowerCase()) {
-            case "r":
             case "rr":
+            case "r":
                 bot.commands.get('dice').run(bot, message, args);
                 break;
             /**case "dm":
@@ -86,16 +90,10 @@ bot.on("message", async (message) => {
                     toggleRole(message, 'Available to DM');
                 }
                 break;**/
-            case 'list':
-                bot.commands.get('lfg').run(bot, message, ['lfg', 'list']);
-                break;
             case "commands":
             case "command":
                 message.channel.send(commandList());
-                break;
-            // v-UNDER CONSTRUCTION-v
-            case "help":
-                message.channel.send("Reply ,commands to get a list of the words I'll actually listen to.");
+                // bot.commands.get('help').run(bot, message, ['help', 'commands']);
                 break;
             // CHARLOG BLOCK
             case "adjust":
@@ -105,30 +103,25 @@ bot.on("message", async (message) => {
             case "transfer":
             case "spend":
             case "charinfo":
+            case "dmreward":
             case "reward":
                 bot.commands.get('charlog').run(bot, message, args);
                 break;
             // NORRICK ONLY
             case "dobidding":
-                if (funcs.isNorrick(message)) {
-                    message.delete();
-                    message.channel.send(dobidding(message));
-                } else funcs.invalid(message);
+                message.delete();
+                message.channel.send(dobidding(message));
                 break;
             case "nonsense":
-                if (funcs.isNorrick(message)) {
-                    message.delete();
-                    if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE DISABLED**: Boring normality stabilized.');
-                    else message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
-                    nonsenseModeEnabled = !nonsenseModeEnabled;
-                } else funcs.invalid(message);
+                message.delete();
+                if (message.channel.name != 'general-ooc') return message.channel.send("Nonsense mode can only be activated from " + message.guild.channels.find('name', 'general-ooc') + '.');
+                if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE DISABLED**: Boring normality stabilized.');
+                else message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
+                nonsenseModeEnabled = !nonsenseModeEnabled;
                 break;
             case "testo":
-                message.channel.send('https://www.youtube.com/watch?v=n5diMImYIIA');
+                for (i in bot.cmd_desc) {console.log(i); console.log(bot.cmd_desc[i]);}
                 break;
-            case "invalid":
-                if (!funcs.isNorrick(message)) break;
-                message.delete();
             default: funcs.invalid(message);
         }
 });
@@ -167,15 +160,25 @@ function autoBoop(message) {
 }
 
 function alphabet(message) {
-    if (message.member.roles.find("name", 'BUTTHEAD TWERKER') && message.member.roles.find("name", 'Balance DM')) {
+    if (message.member.id == '123675155032440832') { // G only
         let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         message.member.setNickname(alphabet[alphaLet++]).catch(function(error) {
             console.log(error);
         });
-        console.log(message.member.nickname);
         alphaLet = alphaLet%26;
         return;
     }
+}
+
+function tag(message) {
+    if (message.channel.name != 'general-ooc') return;
+    if (message.member.roles.find('name', 'Admins')) return;
+    let swap = message.member.nickname;
+    message.member.setNickname(prevNick).catch(function(error) {
+        console.log(error);
+    });
+    prevNick = swap;
+    console.log('SWAPPED');
 }
 
 bot.login(settings.token);

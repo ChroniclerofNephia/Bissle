@@ -1,9 +1,10 @@
 const api = "https://jsonplaceholder.typicode.com/posts";
 const snekfetch = require("snekfetch");
 const Discord = require('discord.js');
+const funcs = module.require('../funcs.js');
 
 module.exports.run = async (bot, message, args) => {
-    if (!isNorrick(message)) return funcs.invalid(message);
+    if (!funcs.isNorrick(message)) return funcs.invalid(message);
     snekfetch .get(api).then(r => {
         let body = r.body;
         let id = Number(args[1]);

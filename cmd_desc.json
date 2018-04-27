@@ -1,0 +1,122 @@
+{
+    "0" : {
+        "id" : "r",
+        "title" : "r | rr",
+        "blurb" : "Rolls dice. It's real good."
+    },
+    "1" : {
+        "id" : "rr",
+        "title" : "r | rr",
+        "blurb" : "Rolls dice. It's real good."
+    },
+    "2" : {
+        "id" : "command",
+        "title" : "command | commands",
+        "blurb" : "Print list of valid commands."
+    },
+    "3" : {
+        "id" : "commands",
+        "title" : "command | commands",
+        "blurb" : "Print list of valid commands."
+    },
+    "4" : {
+        "id" : "help",
+        "title" : "help",
+        "blurb" : "HELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELP"
+    },
+    "5" : {
+        "id" : "lfg",
+        "title" : "lfg",
+        "blurb" : "Toggles LFG role."
+    },
+    "6" : {
+        "id" : "ask",
+        "title" : "ask",
+        "blurb" : "Ask Bissle a yes or no question, and get a 100% true answer."
+    },
+    "7" : {
+        "id" : "joke",
+        "title" : "joke",
+        "blurb" : "Make Bissle tell you a joke."
+    },
+    "8" : {
+        "id" : "clockwhistle",
+        "title" : "clockwhistle",
+        "blurb" : "Order the clockwhistle surprise, and keep 'em coming!"
+    },
+    "9" : {
+        "id" : "retire",
+        "title" : "retire",
+        "blurb" : "**CAUTION:** Permanently retires your character."
+    },
+    "10" : {
+        "id" : "transfer",
+        "title" : "transfer",
+        "blurb" : "Transfers wealth to another active guild member."
+    },
+    "11" : {
+        "id" : "spend",
+        "title" : "spend",
+        "blurb" : "Spends your hard-earned gold and treasure points on useless baubles."
+    },
+    "12" : {
+        "id" : "charinfo",
+        "title" : "charinfo",
+        "blurb" : "Prints the available information Bissle has on this Guild Member."
+    },
+    "13" : {
+        "id" : "ping",
+        "title" : "ping",
+        "blurb" : "Pings Bissle for testing purposes."
+    },
+    "14" : {
+        "id" : "initiate",
+        "title" : "initiate",
+        "blurb" : "Initiates a new Guild Member."
+    },
+    "15" : {
+        "id" : "reward",
+        "title" : "reward",
+        "blurb" : "Distributes mission rewards to tagged Guild Members."
+    },
+    "16" : {
+        "id" : "dmreward",
+        "title" : "dmreward",
+        "blurb" : "Calculates and distributes DM reward to you."
+    },
+    "17" : {
+        "id" : "adjust",
+        "title" : "adjust",
+        "blurb" : "Increases/decreases selected players' XP/GP/TP total."
+    },
+    "18" : {
+        "id" : "mute",
+        "title" : "mute",
+        "blurb" : "Mutes guild member."
+    },
+    "19" : {
+        "id" : "unmute",
+        "title" : "ummute",
+        "blurb" : "Unmutes muted guild member."
+    },
+    "20" : {
+        "id" : "wipe",
+        "title" : "wipe",
+        "blurb" : "Wipes all guild member data from database."
+    },
+    "21" : {
+        "id" : "dobidding",
+        "title" : "dobidding",
+        "blurb" : "Make Bissle do your bidding."
+    },
+    "22" : {
+        "id" : "nonsense",
+        "title" : "nonsense",
+        "blurb" : "Engage nonsense mode."
+    },
+    "23" : {
+        "id" : "invalid",
+        "title" : "invalid",
+        "blurb" : "Manually trigger Bissle's invalid command response."
+    }
+}

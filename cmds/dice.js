@@ -1,5 +1,11 @@
 const funcs = module.require('../funcs.js');
 
+module.exports = {
+    roll: function(message, rollstring) {
+        return roll(message, rollstring);
+    },
+}
+
 module.exports.run = async (bot, message, args) => {
     switch (args[0].toLowerCase()) {
         case 'r':
@@ -118,7 +124,7 @@ function rollDice(x, n, message) { // Calculates individual dice operands
     if (x == '') x = 1;
     var results = [[], []];
     for (k = 0; k < x; k++) {
-        if (n == 0) results[0][k] = 0;
+        if (n == 0) results[0][k] = 0; // If some dillweed rolls a 0-sided die.
         else results[0][k] = Math.floor(Math.random()*n)+1;
         if(results[0][k] == n || results[0][k] == 1) results[1][k] = '**'+results[0][k]+'**';
         else results[1][k] = ''+results[0][k];
@@ -175,7 +181,7 @@ function diceOps(dice, results, message) { // Applies special die operators
     }
     else if (dice[3] == 'rr') {
         for (j = 0; j < results[0].length; j++) {
-            if(results[0][j] == dice[4]) {
+            if(results[0][j] <= dice[4]) {
                 results[1][j] = '~~'+results[1][j]+'~~, ';
                 var newResult;
                 do {
@@ -191,7 +197,7 @@ function diceOps(dice, results, message) { // Applies special die operators
     }
     else if (dice[3] == 'ro') {
         for (j = 0; j < results[0].length; j++) {
-            if(results[0][j] == dice[4]) {
+            if(results[0][j] <= dice[4]) {
                 results[1][j] = '~~'+results[1][j]+'~~, ';
                 var newResult = rollDice(1, dice[2], message);
                 results[1][j] += newResult[1][0];

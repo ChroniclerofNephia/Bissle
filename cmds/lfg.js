@@ -5,6 +5,7 @@ sql.open('./charlog.sqlite');
 
 module.exports.run = async (bot, message, args) => {
     if (message.channel.type === 'dm') return;
+    if (!message.member.roles.find("name", "Guild Member")) return message.author.send('You can only LFG if you are a registered Guild Member.')
     if (message.channel.name != 'lfg') return message.channel.send('Please LFG in ' + bot.channels.get('371684792988860417') + '.');
     if (args[1] && !['list', 'high', 'mid', 'low', 'add', 'remove', 'pbp'].includes(args[1]))
         return funcs.invalid(message);
