@@ -3,13 +3,16 @@ const settings = require("./botsettings.json");
 const funcs = module.require('./funcs.js');
 const fs = require('fs');
 
+const cmd_desc = require('./cmd_desc.json');
 const PREFIX = settings.prefix;
 var nonsenseModeEnabled = false; var alphaLet = 6; var prevNick = 'Mix-Master ICE';
 
 const bot = new Discord.Client({disableEveryone: true});
 bot.commands = new Discord.Collection();
 bot.mutes = require('./mutes.json');
-bot.cmd_desc = require('./cmd_desc.json');
+bot.lfg = require('./lfg.json');
+bot.inventory = require('./inventory.json');
+
 
 fs.readdir("./cmds/", (err, files) => {
     if(err) console.error(err);
@@ -67,8 +70,9 @@ bot.on("message", async (message) => {
 
     let args = message.content.substring(PREFIX.length).split(" ");
     for (let arg in args) while (args[arg] == '') args.splice(arg, 1);
-    let good = funcs.hasPermission(args[0].toLowerCase(), message.member)
-    if (!good) return funcs.invalid(message);
+    if (!args[0]) return;
+    let good = funcs.hasPermission(args[0].toLowerCase(), message);
+    if (!good && !funcs.testing(message)) return funcs.invalid(message);
     let cmd = bot.commands.get(args[0].toLowerCase());
     if (cmd) cmd.run(bot, message, args);
     else
@@ -77,70 +81,63 @@ bot.on("message", async (message) => {
             case "r":
                 bot.commands.get('dice').run(bot, message, args);
                 break;
-            /**case "dm":
-                if (args[1]) {
-                    if (args[1].toLowerCase() == 'list') {
-                        message.channel.send('Feature not yet implemented.');
-                    } else message.channel.send(invalid(message));
-                } else {
-                    message.delete();
-                    if (!message.member.roles.find("name", 'Available to DM'))
-                        message.channel.send(message.author.toString() + " is ready to DM!");
-                    else message.channel.send(message.author.toString() + " is no longer available to DM.");
-                    toggleRole(message, 'Available to DM');
-                }
-                break;**/
             case "commands":
             case "command":
-                message.channel.send(commandList());
-                // bot.commands.get('help').run(bot, message, ['help', 'commands']);
+                message.channel.send(funcs.commandList(message));
                 break;
             // CHARLOG BLOCK
+            case 'dmrewards':
+                args.shift();
+                bot.commands.get('charlog').run(bot, message, ['dmreward'].concat(args));
+            case 'rewards':
+                args.shift();
+                bot.commands.get('charlog').run(bot, message, ['reward'].concat(args));
+            case 'headcount':
+            case 'donate':
             case "adjust":
             case "wipe":
             case "initiate":
             case "retire":
             case "transfer":
+            case "sell":
             case "spend":
             case "charinfo":
             case "dmreward":
             case "reward":
                 bot.commands.get('charlog').run(bot, message, args);
                 break;
-            // NORRICK ONLY
+            // NEW STUFF
+            case "auction":
+                bot.commands.get('charlog').run(bot, message, args);
+                break;
+            case "buy":
+                bot.commands.get('inventory').run(bot, message, ['inventory'].concat(args));
+                break;
+            // ADMIN ONLY
             case "dobidding":
-                message.delete();
+                if (message.channel.type != 'dm') message.delete();
                 message.channel.send(dobidding(message));
                 break;
             case "nonsense":
                 message.delete();
-                if (message.channel.name != 'general-ooc') return message.channel.send("Nonsense mode can only be activated from " + message.guild.channels.find('name', 'general-ooc') + '.');
+                if (message.channel.name != 'general-ooc' && !funcs.testing(message)) return message.channel.send("Nonsense mode can only be activated from " + message.guild.channels.find('name', 'general-ooc') + '.');
                 if(nonsenseModeEnabled) message.channel.send('**NONSENSE MODE DISABLED**: Boring normality stabilized.');
                 else message.channel.send('**NONSENSE MODE ENABLED**: Prepare loins for maximum nonsense.');
                 nonsenseModeEnabled = !nonsenseModeEnabled;
                 break;
+            case "test":
+                funcs.testmode(message);
+                break;
+            case "reset":
+                if (!funcs.hasPermission('dobidding', message)) return funcs.invalid(message);
+                reset(message);
+                break;
             case "testo":
-                for (i in bot.cmd_desc) {console.log(i); console.log(bot.cmd_desc[i]);}
+                console.log(message.author.id);
                 break;
             default: funcs.invalid(message);
         }
 });
-
-function commandList() {
-    return new Discord.RichEmbed().addField("**Bissle Commands**",
-    "**"+PREFIX +"lfg** - Toggles 'LFG' role. Add **high**, **mid**, **low**, or **pbp** to specify game type.\n" +
-    "        (i.e. **"+PREFIX+"lfg high** for plane-hopping shenanigans)\n" +
-    "        Use **"+PREFIX+"lfg list** to get all members currently LFG.\n" +
-    //"**"+PREFIX +"dm** - Toggles 'Available to DM' role.\n" +
-    "**"+PREFIX +"r** - Rolls dice. Supports keep, drop, reroll, exploding dice, high/low selectors.\n" +
-    "        (i.e. **"+PREFIX+"r 4d6kh3+3d20dl1-14*1d100ro1/2d4rr1+2d10e10 sick** is valid.)\n" +
-    "        Use **"+PREFIX+"rr** to roll several iterations. (i.e. **"+PREFIX+"rr 6 4d6kh3** for stats)\n" +
-    "**"+PREFIX +"ask** - Ask Bissle a yes/no question, and he will answer.\n" +
-    "**"+PREFIX +"joke** - Make Bissle tell you a joke.\n" +
-    "**"+PREFIX +"ping** - Ping Bissle for testing purposes.\n")
-    .setFooter("More functionality will be added as Loreseeker Norrick sees fit.")
-    .setColor(funcs.randColor());
-}
 
 function dobidding(message) {
     var responses = [
@@ -179,6 +176,22 @@ function tag(message) {
     });
     prevNick = swap;
     console.log('SWAPPED');
+}
+
+function reset(message) {
+    var c = 9;
+    var interval = setInterval (function () {
+        // use the message's channel (TextChannel) to send a new message
+        if (c == 9) {
+            message.channel.send('**SERVER RESET IN T-MINUS 10...**');
+        }
+        message.channel.send('**'+c--+'...**')
+        .catch(console.error); // add error handling here
+        if (c == 0) {
+            clearInterval(interval);
+            return;
+        }
+    }, 1000);
 }
 
 bot.login(settings.token);
