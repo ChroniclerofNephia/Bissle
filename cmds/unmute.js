@@ -1,4 +1,5 @@
 const fs = require('fs');
+const settings = module.require('../botsettings.json');
 
 module.exports.run = async (bot, message, args) => {
     if (message.channel.type === 'dm') return;
@@ -21,8 +22,8 @@ module.exports.run = async (bot, message, args) => {
         });
 
         message.channel.send(message.author.toString() + " *has dispelled the **Silence** on* " + troll.toString() + '.');
-        if (message.channel.name != 'the-hexagon')    
-            message.guild.channels.find("name", "the-hexagon").send(message.author.toString() + " *has dispelled the **Silence** on* " + troll.toString() + '.');
+        if (message.channel.name != settings.adminchat)    
+            message.guild.channels.find("name", settings.adminchat).send(message.author.toString() + " *has dispelled the **Silence** on* " + troll.toString() + '.');
     } else message.channel.send("Sorry, kid. That spell is a bit too high level for ye.");
 }
 

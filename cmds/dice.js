@@ -7,6 +7,8 @@ module.exports = {
 }
 
 module.exports.run = async (bot, message, args) => {
+    if (args[0] == 'dice') return funcs.invalid(message);
+
     switch (args[0].toLowerCase()) {
         case 'r':
             rollOnce(message, args);
@@ -73,7 +75,7 @@ function rollLots(message, args) { // Formats results of multiple rollsets
 
 function roll(message, rollstring) { // Parses, interprets operators, returns results
     var operands = rollstring.split(/[+*/-]/);
-    var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|e)(\d+))*\s*/;
+    var dform = /^\s*(\d*)d(\d+)(?:((?:(?:k|d)(?:h|l)?)|rr|ro|mi|ma|ra|e)(\d+))*\s*/;
     var results = []; var q = 0; var ops = []; var total = '';
     var result = '';
     for (i = 0; i < operands.length; i++) { // For each operand
@@ -125,7 +127,8 @@ function rollDice(x, n, message) { // Calculates individual dice operands
     var results = [[], []];
     for (k = 0; k < x; k++) {
         if (n == 0) results[0][k] = 0; // If some dillweed rolls a 0-sided die.
-        else results[0][k] = Math.floor(Math.random()*n)+1;
+        else // Roll dice 
+            results[0][k] = Math.floor(Math.random()*n)+1;
         if(results[0][k] == n || results[0][k] == 1) results[1][k] = '**'+results[0][k]+'**';
         else results[1][k] = ''+results[0][k];
     }
@@ -202,6 +205,34 @@ function diceOps(dice, results, message) { // Applies special die operators
                 var newResult = rollDice(1, dice[2], message);
                 results[1][j] += newResult[1][0];
                 results[0][j] = newResult[0][0];
+            }
+        }
+    }
+    else if (dice[3] == 'mi') {
+        for (j = 0; j < results[0].length; j++) {
+            if(results[0][j] < dice[4]) {
+                results[1][j] = '~~'+results[1][j]+'~~, ' + dice[4];
+                results[0][j] = parseInt(dice[4]);
+            }
+        }
+    }
+    else if (dice[3] == 'ma') {
+        for (j = 0; j < results[0].length; j++) {
+            if(results[0][j] > dice[4]) {
+                results[1][j] = '~~'+results[1][j]+'~~, ' + dice[4];
+                results[0][j] = parseInt(dice[4]);
+            }
+        }
+    }
+    else if (dice[3] == 'ra') {
+        let reroll = true;
+        for (j = 0; j < results[0].length; j++) {
+            if(results[0][j] == dice[4] && reroll) {
+                reroll = !reroll;
+                results[1][j] = '__'+results[1][j]+'__, ';
+                var newResult = rollDice(1, dice[2], message);
+                results[1][j] += newResult[1][0];
+                results[0][j] += newResult[0][0];
             }
         }
     }

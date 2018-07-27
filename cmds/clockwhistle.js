@@ -140,7 +140,7 @@ const newRace = [
 ];
 
 module.exports.run = async (bot, message, args) => {
-    if (message.channel.name != 'guild-hall') return message.channel.send("Sorry, we don't serve clockwhistle surprises here. Only in the " + message.guild.channels.find('name', 'guild-hall') + '.');
+    if (message.channel.name != 'guild-hall' && !funcs.testing(message)) return message.channel.send("Sorry, we don't serve clockwhistle surprises here. Only in the " + message.guild.channels.find('name', 'guild-hall') + '.');
     if (!args[1]) return message.channel.send("Invalid format. Enter your Constitution modifier after the command.\n\t(i.e. **,clockwhistle 2**)");
     if (isNaN(parseInt(args[1]))) return message.channel.send('Please enter a valid number.');
     if (parseInt(args[1]) >= 14) return message.channel.send('You cannot fail. Spend as much gold as you want.');
@@ -155,7 +155,7 @@ module.exports.run = async (bot, message, args) => {
         else preput = '**Con Save #' + counter + '**: ' + stringNsum[0] + ' = ' + result + '\n';
     }
     let output = message.author.toString() + '\n' + preput + cwEffect(message) + '\n';
-    bot.commands.get('charlog').run(bot, message, ['spend', counter*0.5, 'GP', (counter > 1 ? 'clockwhistles': 'a clockwhistle')]);
+    bot.commands.get('charlog').run(bot, message, ['transfer', counter*0.5, '429691339270258688']);
     message.channel.send(output);
 }
 
@@ -169,7 +169,6 @@ function cwEffect(message) {
 }
 
 function cwSpecial(result, message) {
-    console.log('here ' + result);
     if (result > specLength) return 'Bissle pooped his pants.';
     if (result < 8) {
         if (result < 4) {

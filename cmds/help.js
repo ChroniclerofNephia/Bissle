@@ -12,29 +12,31 @@ const ADMIN = funcs.ADMIN;
 
 module.exports.run = async (bot, message, args) => {
     args.shift();
-    if (!args[0]) return message.channel.send('What would you like help with?')
+    if (!args[0]) return message.channel.send('What would you like help with? Enter **,help** followed by the name of the command.\nFor a list of commands, enter **,commands**')
     let request = args[0];
-    if (!ADMIN.includes(request)) return message.channel.send('Sorry, kid. I\'m afraid I can\'t help you with ' + args.join(' ') + '.');
-    if (!funcs.hasPermission(request, message.member)) return message.channel.send('No can do, twerp. You\'re not high enough level to use ,' + request + '.');
+    if (!funcs.hasPermission(request, message)) return message.channel.send('No can do, twerp. You\'re not high enough level to use ,' + request + '.');
     let embed = new Discord.RichEmbed().setColor(funcs.randColor());
     switch(request) {
         case 'r':
         case 'rr':
             embed.addField(PREFIX+'r | rr',
-                "Rolls dice. Supports keep (**k**/**kh**/**kl**), drop (**d**/**dh**/**dl**), reroll once (**ro**), reroll infinitely (**rr**), and exploding dice (**e**).")
+                "Rolls dice. Supports keep (**k**/**kh**/**kl**), drop (**d**/**dh**/**dl**), reroll once (**ro**), reroll infinitely (**rr**), reroll and add (**ra**), " + 
+                    "minimum/maximum (**mi**/**ma**), and exploding dice (**e**).")
             .addField('Examples',
                 "**"+PREFIX+"r d100** - Roll a single percentile die.\n" +
                 "**"+PREFIX+"r 2d20kh1-1** or **"+PREFIX+"r 2d20dl1-1** - Roll a history check with advantage.\n" +
                 "**"+PREFIX+"r 2d20kl1-1** or **"+PREFIX+"r 2d20dh1-1** - Roll a stealth check in half-plate.\n" +
                 "**"+PREFIX+"r 2d6ro2+4** - Roll maul damage with Great Weapon Fighting class feature.\n" +
                 "**"+PREFIX+"r 2d6rr2+4** - Illegally roll maul damage with Great Weapon Fighting class feature.\n" +
+                "**"+PREFIX+"r 10d6ra6** - Toss a 5th-level **Fireball** with Spell Bombardment.\n" +
+                "**"+PREFIX+"r 4d8mi2+4** - Cast a 3rd-level **Thunderwave** with Elemental Adept.\n" +
                 "**"+PREFIX+"r 5d10e10** - Roll a medicine check as an old-timey doctor in Deadlands.\n" +
                 "**"+PREFIX+"rr** to roll several iterations. (i.e. **"+PREFIX+"rr 6 4d6kh3** to roll stats for a homegame)\n")
             .setFooter('Bissle knows PEMDAS, scientific notation, and several other arithmancy spells.');
             break;
         case 'command':
         case 'commands':
-            embed = commandList(message);
+            embed = funcs.commandList(message);
             break;
         case 'help':
             embed.addField('HELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHELPHEL',
@@ -58,8 +60,16 @@ module.exports.run = async (bot, message, args) => {
                 "**"+PREFIX+"lfg [low/mid/high]** - Manually toggles LFG role for specific tier.\n" +
                 "**"+PREFIX+"lfg pbp** - Manually toggles LFG role for Play-By-Post games.\n" +
                 "**"+PREFIX+"lfg list** - Prints list of all guild members currently LFG.\n" +
-                "**"+PREFIX+"lfg [add/remove] - Same as **lfg** toggle, but only works one way.\n")
+                "**"+PREFIX+"lfg [add/remove]** - Same as **lfg** toggle, but only works one way.\n")
             .setFooter('If you forget to remove yourself from LFG before bed, Bissle will send you threatening PMs.');
+            break;
+        case 'dm':
+            embed.addField(PREFIX+'dm',
+                "Toggles 'Available to DM' role from the " + message.guild.channels.find("name", "lfg") + " channel.\n")
+            .addField('Subcommands',
+                "**"+PREFIX+"dm list** - Prints list of all available DMs.\n" +
+                "**"+PREFIX+"dm [add/remove]** - Same as **dm** toggle, but only works one way.\n")
+            .setFooter('If you forget to remove yourself from the DM list before bed, caffeine-fueled players may send you threatening PMs.');
             break;
         case 'ask':
             embed.addField(PREFIX+'ask [INANE YES/NO QUESTION]',
@@ -84,30 +94,56 @@ module.exports.run = async (bot, message, args) => {
                 "This command can only be executed from the " + message.guild.channels.find("name", "hall-of-dms") + '.')
             .setFooter('I was an adventurer once. Level 20 too. But then I retired and, well...');
             break;
-        case 'transfer': // Channel restriction
+        case 'transfer': // Auction/Hall of DMs Only
             embed.addField(PREFIX+'transfer [#GP] [RECIPIENT\'S DISCORD TAG]',
                 "Transfers wealth to another active guild member.\n" +
-                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)")
+                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)\n" + 
+                "This command can only be executed from the " + message.guild.channels.find("name", "hall-of-dms") + '.')
             .setFooter('Bot development is hard work. Send your appreciation to @Loreseeker Norrick.');
             break;
         case 'spend': // Market Only for GP, Hall of DMs for TP
-            embed.addField(PREFIX+'spend [#GP] on [USELESS ITEM/SERVICE]',
+            embed.addField(PREFIX+'spend [#GP] on [USELESS ITEM/SERVICE/DTP/MAGIC BLENDERS/GAZEBOS/ETC.]',
                 "Spends your hard-earned gold on useless baubles and/or precious healing potions in #the-market.\n" +
                 "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)\n" +
                 'Items in the PHB can be purchased at the listed price, and sold back for half.\n' +
                 'Ping GM/Staff if you\'re looking for something not listed there.\n' +
-                "This command can only be executed from " + message.guild.channels.find("name", "the-market") + '.')
+                'Gold is also spent when rolling DTP, crafting magic items, and constructing buildings.' +
+                "This command can only be executed from " + message.guild.channels.find("name", "the-market") + ', ' + message.guild.channels.find("name", "dtp-rolls") + ', ' +  message.guild.channels.find("name", "magic-item-research-and-crafting") + ', or ' + message.guild.channels.find("name", "construction") + '.')
             .addField(PREFIX+'spend [#TP] on [TREASURE TABLE ROLL]',
                 "You can also spend treasure points to roll on a loot table before a mission.\n" +
                 "See the Treasure Point System doc in #player-documents-forms-and-sheets for more details.\n" +
                 "This command can only be executed from the " + message.guild.channels.find("name", "hall-of-dms") + '.')
+            .addField(PREFIX+'spend [#MP] on [CLOAK OF BILLOWING, ETC.]',
+                "Material points used in crafting magic items are not tracked separately from TP.\n" +
+                "When you would collect MP after a mission, **,spend** the rewarded TP on the project.\n" +
+                "If an ally is assisting you, have them do the same and ping you.\n" +
+                "This command can only be executed from the " + message.guild.channels.find("name", "magic-item-research-and-crafting") + '.')
             .setFooter('I keep having garbage luck on my TP rolls. What am I supposed to do with all these Oathbows?');
+            break;
+        case 'sell':
+            embed.addField(PREFIX+'sell [19 SPLINTMAILS, ETC.] for [#] GP',
+                "Sell random shit you don't need for half its PHB listed price.\n" +
+                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)\n" +
+                "This command can only be executed from the " + message.guild.channels.find("name", "the-market") + '.')
+            .setFooter('Why sell anything when you could just hoard it in your Bag of Carrying-Capacity-Is-Optional?!');
+            break;
+        case 'donate':
+            embed.addField(PREFIX+'donate [#GP]',
+                "Give some tithings to keep the guild running proper.\n" +
+                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)")
+            .setFooter('Papa Bissle needs a new pair of Boots of the Winterlands.');
+            break;
+        case 'auction':
+            embed.addField(PREFIX+'auction [#GP] [AUCTION-HOLDER\'S DISCORD TAG]',
+                "Pay the winning bid, with 10% automatically taxed to the auction house.\n" +
+                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)")
+            .setFooter('I don\'t care what anyone says; 1 gp increases are a legitimate tactic.');
             break;
         case 'charinfo': // Staff-rolling for third party's extra info
             embed.addField(PREFIX+'charinfo [DISCORD TAG]',
                 "Prints the available information Bissle has on this Guild Member.\n" +
                 "Omit the tag to pull up your own info quickly and easily." +
-                (funcs.hasPermission('initiate', message.member) ? "\n**STAFF ONLY:** For more info on a character, execute this command in the " +
+                (funcs.hasPermission('initiate', message) ? "\n**STAFF ONLY:** For more info on a character, execute this command in the " +
                 message.guild.channels.find("name", "staff-rolling-channel") + '.' : ''))
             .setFooter('Big Bissle is always watching, but it is still a good idea to track your stuff separately too.');
             break;
@@ -120,32 +156,37 @@ module.exports.run = async (bot, message, args) => {
         case 'initiate': // Hall of DMs / Office of Alice Only
             embed.addField(PREFIX+'initiate [NEW ADVENTURER\'S NAME] [DISCORD TAG]',
                 "Initiates a new Guild Member, creates file in Bissle's cabinet." +
-                "\nOnce an adventurer is named, it cannot be changed. So be sure to spell it correctly." +
                 "\nThis command can only be executed from the " + message.guild.channels.find("name", "hall-of-dms") +
-                ' or the ' + message.guild.channels.find("name", "office-of-alice") + '.')
+                ' or the ' + message.guild.channels.find("name", "office-of-alice") + '.' + 
+                "\nOnce an adventurer is named, it cannot be changed. So be sure to spell it correctly.")
             .setFooter('Granted, you could just fake your death. Easy peasy!');
             break;
-        case 'reward': // Channel restriction
+        case 'rewards':
+        case 'reward': // Rewards Log Only
             embed.addField(PREFIX+'reward [#XP] [#GP] [DISCORD TAGS]',
                 "Distributes mission rewards to tagged Guild Members. 1 TP automatically rewarded.\n" +
-                "Amounts provided should be per adventurer. " +
-                "(i.e. **,reward 5 .01 @Tad @Ahri @Jor @Rolen** gives 5 XP and 1 copper to each garbage druid listed.\n" +
-                'Distributing different amounts to different players will require separate entries.')
+                "Amounts provided should be per adventurer.\n" +
+                "(i.e. **,reward 5 .01 @Tad @Ahri** gives 5 XP and 1 copper to each garbage druid listed)\n" +
+                'Distributing different amounts to different players will require separate entries.\n' + 
+                "This command can only be executed from the " + message.guild.channels.find("name", "rewards-log") + ' channel.')
             .setFooter("Ping an Admin or Mod if you screw something up.");
             break;
-        case 'dmreward': // Channel restriction
+        case 'dmrewards':
+        case 'dmreward': // Rewards Log Only
             embed.addField(PREFIX+'dmreward',
                 "Calculates and distributes DM reward appropriate to your active character level.\n")
             .addField("DM Rewards/Mission:",
-                "**XP**: Percentage of difference between XP thresholds of current and next character level\n" +
+                "**XP**: Percentage difference between XP thresholds of current and next character level\n" +
                     "\tLevels 2 - 6: 25%\n\tLevels 7 - 12: 15%\n\tLevels 13 - 19: 20%\n" +
-                "**GP**: 25 gp per character level\n(If you are level 7, you get 7*25 = 175 gp per mission)\n" +
-                "**TP**: .5 TP")
+                "**GP**: 25 gp per character level\n\t(If you are level 7, you get 7*25 = 175 gp per mission)\n" +
+                "**TP**: .5 TP\n" + 
+                "This command can only be executed from the " + message.guild.channels.find("name", "rewards-log") + ' channel.')
             .setFooter('Sweet sweet incentives! Only apply to Remnant games.');
             break;
-        case 'adjust': // Channel restriction
+        case 'adjust': // Rewards Log Only
             embed.addField(PREFIX+'adjust [#] [XP/GP/TP] [DISCORD TAG]',
-                "**Admin/Mod-Only Command**\nIncreases/decreases selected players' XP,GP, or TP total by listed amount.\n")
+                "**Admin/Mod-Only Command**\nIncreases/decreases selected players' XP,GP, or TP total by listed amount.\n" +
+                "This command can only be executed from the " + message.guild.channels.find("name", "rewards-log") + ' channel.')
             .setFooter('Bissle giveth no shits. Bissle taketh away forever.');
             break;
         case 'mute':
@@ -183,63 +224,18 @@ module.exports.run = async (bot, message, args) => {
                 "Manually trigger Bissle's invalid command response.")
             .setFooter('The applications are limitless!');
             break;
+        case 'test':
+            embed.addField(PREFIX+'test',
+                "**Admin-Only Command**\n" +
+                "Engage bot-test mode. Overrides normal channel permissions for the bot-test site.")
+            .setFooter('Science isn\'t about why; it\'s about why not!');
+            break;
         default:
-            embed.addField('HELP', 'I\'ve polymorphed and I can\'t get up!');
+            embed.addField('Sorry, kid. I\'m afraid I can\'t help you with ' + args.join(' ') + '.', "Use ,commands to get a list of what I can help you with.");
     }
     message.channel.send(embed);
 }
 
 module.exports.help = {
     name: 'help'
-}
-
-function commandList(message) {
-    let embed = new Discord.RichEmbed().setColor(funcs.randColor())
-        .setFooter("More functionality will be added as Loreseeker Norrick sees fit.");
-    let nextSet = '';
-
-    // Universal Commands
-    for (i = 0; i < ALL.length; i++) {
-        if (i == 0 || i == 2) i++; // Don't doubleprint commands.
-        let cmd = cmd_desc[i];
-        nextSet += '**' + PREFIX+cmd.title + '** - ' + cmd.blurb + '\n';
-    }
-    embed.addField('__**Bissle Commands**__', nextSet);
-    if (!funcs.hasPermission(cmd_desc[i].id, message.member)) return embed;
-
-    // Guild Member Commands
-    nextSet = '';
-    for (i = ALL.length; i < ORANGE.length; i++) {
-        let cmd = cmd_desc[i];
-        nextSet += '**' + PREFIX+cmd.title + '** - ' + cmd.blurb + '\n';
-    }
-    embed.addField('__**Guild Members Only**__', nextSet);
-    if (!funcs.hasPermission(cmd_desc[i].id, message.member)) return embed;
-
-    // Staff Commands
-    nextSet = '';
-    for (i = ORANGE.length; i < STAFF.length; i++) {
-        let cmd = cmd_desc[i];
-        nextSet += '**' + PREFIX+cmd.title + '** - ' + cmd.blurb + '\n';
-    }
-    embed.addField('__**Staff Only**__', nextSet);
-    if (!funcs.hasPermission(cmd_desc[i].id, message.member)) return embed;
-
-    // Mod Commands
-    nextSet = '';
-    for (i = STAFF.length; i < MOD.length; i++) {
-        let cmd = cmd_desc[i];
-        nextSet += '**' + PREFIX+cmd.title + '** - ' + cmd.blurb + '\n';
-    }
-    embed.addField('__**Mods Only**__', nextSet);
-    if (!funcs.hasPermission(cmd_desc[i].id, message.member)) return embed;
-
-    // Admin Commands
-    nextSet = '';
-    for (i = MOD.length; i < ADMIN.length; i++) {
-        let cmd = cmd_desc[i];
-        nextSet += '**' + PREFIX+cmd.title + '** - ' + cmd.blurb + '\n';
-    }
-    embed.addField('__**Admins Only**__', nextSet);
-    return embed;
 }
