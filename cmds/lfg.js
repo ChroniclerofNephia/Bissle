@@ -2,6 +2,7 @@ const funcs = module.require('../funcs.js');
 const Discord = module.require('discord.js');
 const fs = require('fs');
 const sql = require('sqlite');
+const pers = require('../personality.js');
 sql.open('./charlog.sqlite');
 
 module.exports.run = async (bot, message, args) => {
@@ -13,13 +14,13 @@ module.exports.run = async (bot, message, args) => {
     if (!args[1]) { // TOGGLE
         if(!funcs.hasRole('LFG', message.member))
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                if (!row) return message.channel.send("I sharted all over your file and can't add you to LFG.");
+                if (!row) return message.channel.send(pers.LFG[0]);
                 if (row.level < 5) addlfg(bot, message, 'low');
                 else if (row.level < 11) addlfg(bot, message, 'mid');
                 else if (row.level < 17) addlfg(bot, message, 'high');
                 else addlfg(bot, message, 'epic');
             }, err => {
-                return message.channel.send("I sharted all over your file and can't add you to LFG.");
+                return message.channel.send(pers.LFG[0]);
             });
         else removelfg(bot, message);
     }
@@ -39,13 +40,13 @@ module.exports.run = async (bot, message, args) => {
             if (args[2]) gorp = args[2].toLowerCase();
             if (!args[2] || !(gorp == 'low' || gorp == 'mid' || gorp == 'high' || gorp == 'epic' || gorp == 'pbp'))
                 sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                    if (!row) return message.channel.send("I sharted all over your file and can't add you to LFG.");
+                    if (!row) return message.channel.send(pers.LFG[0]);
                     if (row.level < 5) addlfg(bot, message, 'low');
                     else if (row.level < 11) addlfg(bot, message, 'mid');
                     else if (row.level < 17) addlfg(bot, message, 'high');
                     else addlfg(bot, message, 'epic');
                 }, err => {
-                    return message.channel.send("I sharted all over your file and can't add you to LFG.");
+                    return message.channel.send(pers.LFG[0]);
                 });
             else addlfg(bot, message, gorp);
             break;
@@ -176,7 +177,7 @@ function listlfg(bot, message) {
         });
         for (turd in lfgpbp) turds += lfgpbp[turd][1] + '\n';
         embed.addField(title, turds);
-    } else embed.addField(title, 'Sorry, kid. Folks like their live games.');
+    } else embed.addField(title, pers.LFG[1]);
 
     title = '**Low Tier** (Levels 2-4)';
     if (lfglow.length != 0) {
@@ -186,7 +187,7 @@ function listlfg(bot, message) {
         });
         for (turd in lfglow) turds += lfglow[turd][1] + '\n';
         embed.addField(title, turds);
-    } else embed.addField(title, "Weird. Need more meat for the grinder. Invite some friends!");
+    } else embed.addField(title, pers.LFG[2]);
 
     title = '**Mid Tier** (Levels 5-10)';
     if (lfgmid.length != 0) {
@@ -196,7 +197,7 @@ function listlfg(bot, message) {
         });
         for (turd in lfgmid) turds += lfgmid[turd][1] + '\n';
         embed.addField(title, turds);
-    } else embed.addField(title, 'Too busy FTBing to LFG. Tell \'em to get a life and play D&D with you!');
+    } else embed.addField(title, pers.LFG[3]);
 
     var title = '**High Tier** (Levels 11-16)';
     if (lfghigh.length != 0) {
@@ -206,7 +207,7 @@ function listlfg(bot, message) {
         });
         for (turd in lfghigh) turds += lfghigh[turd][1] + '\n';
         embed.addField(title, turds);
-    } else embed.addField(title, 'Apparently they\'ve all been annihilated by spheres of varying sizes. Shame.');
+    } else embed.addField(title, pers.LFG[4]);
 
     var title = '**Epic Tier** (Levels 17+)';
     if (lfgepic.length != 0) {
@@ -216,7 +217,7 @@ function listlfg(bot, message) {
         });
         for (turd in lfgepic) turds += lfgepic[turd][1] + '\n';
         embed.addField(title, turds);
-    } else embed.addField(title, 'Sorry, bub. Looks like they\'re already being space pirates on the Astral Plane.');
+    } else embed.addField(title, pers.LFG[5]);
 
     return embed;
 }

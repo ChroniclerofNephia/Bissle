@@ -2,10 +2,11 @@ const Discord = require('discord.js');
 const crypto = require('crypto');
 const settings = require('./botsettings.json');
 const cmd_desc = require('./cmd_desc.json');
+const personality = require('./personality.js');
 const PREFIX = settings.prefix;
 
 const ALL = ['r', 'rr', 'command', 'commands', 'help', 'ask', 'joke',];
-const ORANGE = ['lfg', 'dm', 'clockwhistle', 'retire', 'transfer', 'spend', 'sell', 'donate', 'auction', 'charinfo', 'ping'];
+const ORANGE = ['lfg', 'dm', 'clockwhistle', 'retire', 'swap', 'transfer', 'spend', 'sell', 'donate', 'auction', 'charinfo', 'ping'];
 const STAFF = ['initiate', 'reward', 'dmreward', ];
 const MOD = ['adjust', 'mute', 'unmute', ];
 const ADMIN = ['wipe', 'dobidding', 'nonsense', 'invalid', 'test',];
@@ -20,22 +21,11 @@ module.exports = {
     ADMIN : ADMIN,
 
     randColor : function() {
-        return '#'+Math.floor(Math.random()*16777215).toString(16);
+        return randColor();
     },
     
     invalid : function(message) {
-        var responses = [
-            "Speak up, kiddo! I didn't understand a word you said.",
-            "WHAT DID YOU CALL ME YOU LITTLE TWERP?!",
-            "That didn't make a lick of sense.",
-            "Sorry, I don't speak abyssal.",
-            "Sorry, " + message.author.toString() + ". I don't know what the fuck that means.",
-            'https://www.youtube.com/watch?v=iHW1ho8L7V8',
-            '¡Pobrecito! ¿Quién te dejó caer en tu cabeza?',
-            "Perhaps you should try again after the **Feeblemind** has worn off.",
-            new Discord.RichEmbed().setImage('https://i.imgur.com/6DN4q4L.gif').setColor(randColor()),
-            new Discord.RichEmbed().setImage('https://pbs.twimg.com/profile_images/877240012357685248/k3g8BV09.jpg').setColor(randColor()),
-        ];
+        var responses = personality.INVALID;
         let x = Math.floor(Math.random()*(responses.length));
         return message.channel.send(responses[x]);
     },

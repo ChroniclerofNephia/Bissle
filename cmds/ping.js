@@ -1,18 +1,6 @@
-const funcs = module.require('../funcs.js');
-const Discord = module.require("discord.js");
+const personality = require('../personality.js');
 
-let pings = [
-    "Don't f@%$ing ping me, you d&*#s@#&&%er!",
-    "You know pings are just a cry for help.",
-    "I bet this is really fun for you isn't it.",
-    "...",
-    "Please stop.",
-    "(╯°□°）╯︵ ┻━┻",
-    new Discord.RichEmbed().setColor(funcs.randColor())
-        .setImage('https://i.imgur.com/QUfjucN.gif'),
-    new Discord.RichEmbed().setColor(funcs.randColor())
-        .setImage('https://media0.giphy.com/media/xUPGcKbFxXKsmeEZpu/giphy-downsized.gif'),
-]
+let pings = personality.PING;
 
 module.exports.run = async (bot, message, args) => {
     let x = Math.floor(Math.random()*(pings.length+1));

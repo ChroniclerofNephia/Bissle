@@ -1,5 +1,7 @@
 const funcs = module.require('../funcs.js');
 const settings = module.require('../botsettings.json');
+const personality = module.require('../personality.js');
+const fs = require('fs');
 const sql = require('sqlite');
 sql.open('./charlog.sqlite');
 
@@ -20,10 +22,10 @@ module.exports.run = async (bot, message, args) => {
             let target = message.mentions.users.first() || message.author;
             sql.get(`SELECT * FROM charlog WHERE userId ="${target.id}"`).then(row => {
                 if (!row) return message.channel.send("According to my records, " + ( target.id == message.author.id ? 'you are' : 'this person is' ) + " not a member of our guild.");
-                if (target.id == '429691339270258688' && !funcs.hasPermission("nonsense", message)) return message.channel.send('Nice try, turd.');
+                if (target.id == '429691339270258688' && !funcs.hasPermission("nonsense", message)) return message.channel.send(personality.CHARLOG[0]);
                 let info = '__**' + row.name + '**__\n**Level:** ' + row.level;
                 if (message.author.id == target.id || (funcs.hasPermission('initiate', message) && (message.channel.name == 'staff-rolling-channel' || funcs.testing(message))))
-                    info += '\n**XP:** ' + row.xp + ' XP. ' + (row.level != 20 ? '(' + (thresholds[row.level] - row.xp) +' XP til Level ' + (row.level+1) + ')' : '***OH SHIT WE GOT A BADASS OVER HERE***' ) +
+                    info += '\n**XP:** ' + row.xp + ' XP. ' + (row.level != 20 ? '(' + (thresholds[row.level] - row.xp) +' XP til Level ' + (row.level+1) + ')' : '***'+ personality.CHARLOG[1] +'***' ) +
                     '\n**TP:** ' + (row.tp/2) + ' TP\n**Wealth:** ' + (row.cp/100) + ' GP';
                 message.channel.send(info);
                 message.delete();
@@ -128,7 +130,7 @@ module.exports.run = async (bot, message, args) => {
                 if (recipient.id == message.author.id && !funcs.isNorrick(message)) {
                     message.channel.send('You cannot reward yourself.');
                 }
-                else if (recipient.id == '429691339270258688' && !funcs.isNorrick(message)) message.channel.send('Nice try, turd.');
+                else if (recipient.id == '429691339270258688' && !funcs.isNorrick(message)) message.channel.send(personality.CHARLOG[0]);
                 else sql.get(`SELECT * FROM charlog WHERE userId ="${recipient.id}"`).then(row => {
                     if (!row) message.channel.send(recipient.toString() + ' has not yet been initiated. Cannot process reward paperwork.');
                     else { // Reward and confirm
@@ -275,7 +277,7 @@ module.exports.run = async (bot, message, args) => {
                 if (!funcs.isNorrick(message) && (recipient.id == message.author.id || !funcs.hasPermission('adjust', message))) {
                     message.channel.send('You cannot adjust your own ' + atype + '.');
                 }
-                else if (recipient.id == '429691339270258688' && !funcs.isNorrick(message)) message.channel.send('Nice try, turd.');
+                else if (recipient.id == '429691339270258688' && !funcs.isNorrick(message)) message.channel.send(personality.CHARLOG[0]);
                 else sql.get(`SELECT * FROM charlog WHERE userId ="${recipient.id}"`).then(row => {
                     if (!row) message.channel.send(recipient.toString() + ' has not yet been initiated. Cannot process reward paperwork.');
                     else { // Reward and confirm
@@ -399,6 +401,73 @@ module.exports.run = async (bot, message, args) => {
                 '**Mid Tier:** ' + headCount.mid + '\n' +
                 '**High Tier:** ' + headCount.high + '\n' +
                 '**Epic Tier:** ' + headCount.epic);
+            break;
+        case 'swap':
+            // check some stuff
+            sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
+                if (!row) {
+                    if (!bot.vault[message.author.id]) {
+                        return message.channel.send("According to my records, you are not a member of our guild. Please ,initiate yourself first!");
+                    }
+                    let v2Name = bot.vault[message.author.id].name;
+                    let v2Level = bot.vault[message.author.id].level;
+                    let v2XP = bot.vault[message.author.id].xp;
+                    let v2CP = bot.vault[message.author.id].cp;
+                    let v2TP = bot.vault[message.author.id].tp;
+
+                    // get inactive character information and make it active
+                    sql.run("INSERT INTO charlog (userId, name, level, xp, cp, tp) VALUES (?, ?, ?, ?, ?, ?)", [message.author.id, v2Name, v2Level, v2XP, v2CP, v2TP]);
+                    delete bot.vault[message.member.id];
+                    fs.writeFile('./vault.json', JSON.stringify(bot.vault, null, 4), err => {
+                        if (err) throw err;
+                    });
+                    message.channel.send(message.author.toString() + ' has made ' + v2name + ' active.');
+                    return;
+                }
+                // Active character info
+                let tempName = row.name;
+                let tempLevel = row.level;
+                let tempXP = row.xp;
+                let tempCP = row.cp;
+                let tempTP = row.tp;
+
+                // Vault character info
+                if (!bot.vault[message.author.id]) {
+                    sql.run(`DELETE FROM charlog WHERE userId = ${message.author.id}`);
+                    message.channel.send(message.author.toString() + ' has made ' + tempName + ' inactive.');
+                }
+                else {
+                    let vName = bot.vault[message.author.id].name;
+                    let vLevel = bot.vault[message.author.id].level;
+                    let vXP = bot.vault[message.author.id].xp;
+                    let vCP = bot.vault[message.author.id].cp;
+                    let vTP = bot.vault[message.author.id].tp;
+
+                    // get inactive character information and make it active
+                    sql.run(`DELETE FROM charlog WHERE userId = ${message.author.id}`).then(row => {
+                        sql.run("INSERT INTO charlog (userId, name, level, xp, cp, tp) VALUES (?, ?, ?, ?, ?, ?)", [message.author.id, vName, vLevel, vXP, vCP, vTP]);
+                    }, err => {
+                        if (err) throw err;
+                    });
+                    message.channel.send(message.author.toString() + ' has made ' + vName + ' active. ' + tempName + ' is now in the vault.');
+                }
+
+                bot.vault[message.member.id] = {
+                    name: tempName,
+                    level: tempLevel,
+                    xp: tempXP,
+                    cp: tempCP,
+                    tp: tempTP,
+                }
+    
+                fs.writeFile('./vault.json', JSON.stringify(bot.vault, null, 4), err => {
+                    if (err) throw err;
+                });
+
+                message.delete();
+            }, err => {
+                message.channel.send("Some shit went wrong!");
+            });
             break;
         default:
             return funcs.invalid(message);

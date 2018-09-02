@@ -14,7 +14,7 @@ module.exports.run = async (bot, message, args) => {
     args.shift();
     if (!args[0]) return message.channel.send('What would you like help with? Enter **,help** followed by the name of the command.\nFor a list of commands, enter **,commands**')
     let request = args[0];
-    if (!funcs.hasPermission(request, message)) return message.channel.send('No can do, twerp. You\'re not high enough level to use ,' + request + '.');
+    if (!funcs.hasPermission(request, message)) return message.channel.send('No can do, twerp. You\'re not high enough level to use ' + PREFIX + request + '.');
     let embed = new Discord.RichEmbed().setColor(funcs.randColor());
     switch(request) {
         case 'r':
@@ -90,9 +90,16 @@ module.exports.run = async (bot, message, args) => {
         case 'retire': // Hall of DMs Only
             embed.addField(PREFIX+'retire',
                 "**WARNING: Use of this function will render you unable to return to your character at their current level. Think about what you are doing.**\n" +
-                "Permanently retires your current character from the guild, deletes tracked stats.\n" +
+                "Permanently retires your active character from the guild, deletes tracked stats.\n" +
                 "This command can only be executed from the " + message.guild.channels.find("name", "hall-of-dms") + '.')
             .setFooter('I was an adventurer once. Level 20 too. But then I retired and, well...');
+            break;
+        case 'swap':
+            embed.addField(PREFIX+'swap',
+                "Swaps your active and inactive characters.\nIf you don't have a second character in Bissle, swap and then "+PREFIX+"initiate.\n" +
+                "If you retired your active character, but need your inactive one, just swap.\n" +
+                "Only retires your active character. Inactive sticks around until you swap and retire.")
+            .setFooter('Swap fast enough to duplicate characters and break the space-time continuum. No big.');
             break;
         case 'transfer': // Auction/Hall of DMs Only
             embed.addField(PREFIX+'transfer [#GP] [RECIPIENT\'S DISCORD TAG]',

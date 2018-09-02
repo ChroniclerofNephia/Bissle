@@ -76,6 +76,13 @@
         "dmable" : false,
         "minrole" : "ORANGE"
     },
+    "319855219222" : {
+        "id" : "swap",
+        "title" : "swap",
+        "blurb" : "Swaps your active and inactive characters.",
+        "dmable" : false,
+        "minrole" : "ORANGE"
+    },
     "176293797062" : {
         "id" : "transfer",
         "title" : "transfer",

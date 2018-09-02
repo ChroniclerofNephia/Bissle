@@ -1,13 +1,6 @@
-let fortunes = [
-    "Most definitely.",
-    "Probably.",
-    "That's highly unlikely. Nearly impossible.",
-    "Nope.",
-    "Maybe.",
-    "How the heck should I know?! I'm just a bot!",
-    "¯\\_(ツ)_/¯",
-    'https://www.youtube.com/watch?v=yIhUYaLXOMs',
-];
+const personality = module.require('../personality.js');
+
+let fortunes = personality.ASK;
 
 module.exports.run = async (bot, message, args) => {
     if (args[1]) message.channel.send(fortunes[Math.floor(Math.random() * fortunes.length)]);

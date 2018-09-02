@@ -2,8 +2,7 @@ const Discord = require("discord.js");
 const settings = require("./botsettings.json");
 const funcs = module.require('./funcs.js');
 const fs = require('fs');
-
-const cmd_desc = require('./cmd_desc.json');
+const personality = require('./personality.js');
 const PREFIX = settings.prefix;
 var nonsenseModeEnabled = false; var alphaLet = 6; var prevNick = 'Mix-Master ICE';
 
@@ -11,6 +10,7 @@ const bot = new Discord.Client({disableEveryone: true});
 bot.commands = new Discord.Collection();
 bot.mutes = require('./mutes.json');
 bot.lfg = require('./lfg.json');
+bot.vault = require('./vault.json');
 bot.inventory = require('./inventory.json');
 
 
@@ -59,6 +59,8 @@ bot.on("ready", async () => {
     member.guild.channels.find("name", "gate-of-arrival").send("Yo waddap, it's dat " + member.toString());
 });**/
 
+bot.on("error", console.error);
+
 bot.on("message", async (message) => {
     if (nonsenseModeEnabled) {
         autoBoop(message);
@@ -92,6 +94,7 @@ bot.on("message", async (message) => {
             case 'rewards':
                 args.shift();
                 bot.commands.get('charlog').run(bot, message, ['reward'].concat(args));
+            case 'swap':
             case 'headcount':
             case 'donate':
             case "adjust":
@@ -133,19 +136,14 @@ bot.on("message", async (message) => {
                 reset(message);
                 break;
             case "testo":
-                console.log(message.author.id);
+                console.log(funcs.cmdHash('swap'));
                 break;
             default: funcs.invalid(message);
         }
 });
 
 function dobidding(message) {
-    var responses = [
-        "***Bissle will remember that.***",
-        "I'll be reporting this.",
-        "*takes notes vigorously*",
-        "*hefts hand-me-down banhammer*\nYou wanna play? Let's play.",
-    ]
+    var responses = personality.DOBIDDING;
     return responses[Math.floor(Math.random()*responses.length)];
 }
 
