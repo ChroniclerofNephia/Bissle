@@ -9,6 +9,9 @@ const thresholds = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 
 const dmRewardBracket = [25, 15, 20];
 const cpxpRatios = [-1, 27, 20, 9, 5, 15, 25, 31, 32, 35, 32, 48, 52, 79, 84, 87, 98, 133, 166, 200, 200]// CURRENT DM REWARDS
 
+const gnollTax = 1.33;
+
+
 module.exports.run = async (bot, message, args) => {
     if (args[0] == 'charlog') return funcs.invalid(message);
     if (message.channel.name == 'rewards-log' && !(args[0] == 'reward' || args[0] == 'dmreward' || args[0] == 'adjust')) {
@@ -59,10 +62,11 @@ module.exports.run = async (bot, message, args) => {
                             if (message.channel.name != 'the-market' && message.channel.name != 'dtp-rolls' && message.channel.name != 'guild-hall' && !funcs.testing(message) && message.channel.name != 'magic-item-research-and-crafting' && message.channel.name != 'construction' && message.channel.name != 'magic-item-purchasing' && message.channel.name != 'business') return message.channel.send("Not everything can be bought. Enter **,help spend** for more information on where you can **,spend**.");
                             samt *= 100;
                             if (samt > row.cp) message.channel.send("You cannot spend more " + stype + " than you have.");
+                            else if (samt*gnollTax > row.cp) message.channel.send("Resources are scarce these days. You need an extra " + samt*(gnollTax-1) + " to afford that.");
                             else {
-                                message.channel.send(message.author.toString() + ' has wasted ' + (samt/100) + ' GP on ' + sacquisition + '.' +
-                                    '\n**New GP Total:** ' + ((row.cp - samt)/100) + ' GP');
-                                sql.run(`UPDATE charlog SET cp = ${row.cp - samt} WHERE userId = ${message.author.id}`);
+                                message.channel.send(message.author.toString() + ' has wasted ' + (samt/100) + ' GP on ' + sacquisition + ', plus an extra ' + (Math.round(samt*(gnollTax-1))/100) + ' due to the recent gnoll incursions.' +
+                                    '\n**New GP Total:** ' + ((row.cp - Math.round(samt*gnollTax))/100) + ' GP');
+                                sql.run(`UPDATE charlog SET cp = ${row.cp - Math.round(samt*gnollTax)} WHERE userId = ${message.author.id}`);
                             }
                             break;
                         case 'tp':
