@@ -9,6 +9,9 @@ const thresholds = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 
 const dmRewardBracket = [25, 15, 20];
 const cpxpRatios = [-1, 27, 20, 9, 5, 15, 25, 31, 32, 35, 32, 48, 52, 79, 84, 87, 98, 133, 166, 200, 200]// CURRENT DM REWARDS
 
+const gnollTax = 1;
+
+
 module.exports.run = async (bot, message, args) => {
     if (args[0] == 'charlog') return funcs.invalid(message);
     if (message.channel.name == 'rewards-log' && !(args[0] == 'reward' || args[0] == 'dmreward' || args[0] == 'adjust')) {
@@ -25,17 +28,16 @@ module.exports.run = async (bot, message, args) => {
                 if (target.id == '429691339270258688' && !funcs.hasPermission("nonsense", message)) return message.channel.send(personality.CHARLOG[0]);
                 let info = '__**' + row.name + '**__\n**Level:** ' + row.level;
                 if (message.author.id == target.id || (funcs.hasPermission('initiate', message) && (message.channel.name == 'staff-rolling-channel' || funcs.testing(message))))
-                    info += '\n**XP:** ' + row.xp + ' XP. ' + (row.level != 20 ? '(' + (thresholds[row.level] - row.xp) +' XP til Level ' + (row.level+1) + ')' : '***'+ personality.CHARLOG[1] +'***' ) +
-                    '\n**TP:** ' + (row.tp/2) + ' TP\n**Wealth:** ' + (row.cp/100) + ' GP';
+                    info += '\n**XP:** ' + row.xp + ' XP. ' + (row.level != 20 ? '(' + (thresholds[row.level] - row.xp) +' XP til Level ' + (row.level+1) + ')' : '***'+ personality.CHARLOG[1+Math.floor(Math.random()*(personality.CHARLOG.length-1))] +'***' ) +
+                    '\n**TP:** ' + (row.tp/2) + ' TP\n**Wealth:** ' + (Math.floor(row.cp)/100) + ' GP';
                 message.channel.send(info);
                 message.delete();
             }, err => {
-                message.channel.send("My files show that the Heroes Guild of Remnant is completely devoid of adventurers. Weird!");
+                message.channel.send("My files show that the Adventurer's Guild of Remnant is completely devoid of adventurers. Weird!");
             });
             break;
         case 'spend':
-            if (message.channel.name != 'the-market' && message.channel.name != 'dtp-rolls' && message.channel.name != 'guild-hall' && !funcs.testing(message) && message.channel.name != 'magic-item-purchasing' && message.channel.name != 'business' &&
-                message.channel.name != 'hall-of-dms' && message.channel.name != 'magic-item-research-and-crafting' && message.channel.name != 'construction') return message.channel.send("Not everything can be bought. Enter **,help spend** for more information on where you can **,spend**.");
+            if (['the-market', 'dtp-rolls', 'downtime', 'guild-hall', 'hall-of-dms', 'magic-item-research-and-crafting', 'construction', 'magic-item-purchasing', 'business'].indexOf(message.channel.name) < 0 && !funcs.testing(message)) return message.channel.send("Not everything can be bought. Enter **,help spend** for more information on where you can **,spend**.");
             if (!args[1]) return message.channel.send('Please specify a valid number.');
             if (args[1][0] == '.') args[1] = '0' + args[1];
             if (isNaN(args[1]) || parseFloat(args[1]) <= 0) return message.channel.send('Please specify a valid number.');
@@ -56,13 +58,13 @@ module.exports.run = async (bot, message, args) => {
                 else { // Reward and confirm
                     switch(stype) {
                         case 'gp':
-                            if (message.channel.name != 'the-market' && message.channel.name != 'dtp-rolls' && message.channel.name != 'guild-hall' && !funcs.testing(message) && message.channel.name != 'magic-item-research-and-crafting' && message.channel.name != 'construction' && message.channel.name != 'magic-item-purchasing' && message.channel.name != 'business') return message.channel.send("Not everything can be bought. Enter **,help spend** for more information on where you can **,spend**.");
                             samt *= 100;
                             if (samt > row.cp) message.channel.send("You cannot spend more " + stype + " than you have.");
+                            else if (samt*gnollTax > row.cp) message.channel.send("Resources are scarce these days. You need an extra " + samt*(gnollTax-1) + " to afford that.");
                             else {
-                                message.channel.send(message.author.toString() + ' has wasted ' + (samt/100) + ' GP on ' + sacquisition + '.' +
-                                    '\n**New GP Total:** ' + ((row.cp - samt)/100) + ' GP');
-                                sql.run(`UPDATE charlog SET cp = ${row.cp - samt} WHERE userId = ${message.author.id}`);
+                                message.channel.send(row.name + ' has wasted ' + (samt/100) + ' GP on ' + sacquisition + '.' +
+                                    '\n**New GP Total:** ' + ((row.cp - Math.round(samt*gnollTax))/100) + ' GP');
+                                sql.run(`UPDATE charlog SET cp = ${row.cp - Math.round(samt*gnollTax)} WHERE userId = ${message.author.id}`);
                             }
                             break;
                         case 'tp':
@@ -71,7 +73,7 @@ module.exports.run = async (bot, message, args) => {
                             samt *= 2;
                             if (samt > row.tp) message.channel.send("You cannot spend more " + stype + " than you have.");
                             else {
-                                message.channel.send(message.author.toString() + ' has wasted ' + (samt/2) + ' TP on ' + sacquisition + '.' +
+                                message.channel.send(row.name + ' has wasted ' + (samt/2) + ' TP on ' + sacquisition + '.' +
                                     '\n**New TP Total:** ' + ((row.tp - samt)/2) + ' TP');
                                 sql.run(`UPDATE charlog SET tp = ${row.tp - samt} WHERE userId = ${message.author.id}`);
                             }
@@ -101,7 +103,7 @@ module.exports.run = async (bot, message, args) => {
                 if (!row) return message.channel.send('https://www.youtube.com/watch?v=XM4GFiMnK18');
                 else { // Reward and confirm
                     profit *= 100;
-                    message.channel.send(message.author.toString() + ' has earned ' + (profit/100) + ' GP by pawning off ' + gizmo + '.' +
+                    message.channel.send(row.name + ' has earned ' + (profit/100) + ' GP by pawning off ' + gizmo + '.' +
                         '\n**New GP Total:** ' + ((row.cp + profit)/100) + ' GP');
                     sql.run(`UPDATE charlog SET cp = ${row.cp + profit} WHERE userId = ${message.author.id}`);
                     message.delete();
@@ -122,7 +124,7 @@ module.exports.run = async (bot, message, args) => {
             if (args[2][0] == '.') args[2] = '0' + args[2];
             if (isNaN(args[2]) || parseFloat(args[2]) < 0) return message.channel.send('Please specify valid reward values for XP and GP, in that order.'); // No NaN or negatives
             if (parseInt(parseFloat(args[2])*100) - parseFloat(args[2])*100 != 0) return message.channel.send('Please specify valid reward values for XP and GP in that order.'); // Stop at CP
-
+            let noTP = (args[3] == '0');
             let recipients = message.mentions.users;
             if (!recipients) return message.channel.send('Please specify at least one recipient.')
             message.channel.send('__**REWARDS**__\n**DM:** ' + message.author.toString());
@@ -136,13 +138,13 @@ module.exports.run = async (bot, message, args) => {
                     else { // Reward and confirm
                         let pxpamt = parseInt(args[1]);
                         let pcpamt = parseFloat(args[2])*100;
-                        let ptpamt = (row.level < 11 ? (row.level < 5 ? 2 : 4) : (row.level < 17 ? 6 : 8));
-                        message.channel.send(recipient.toString() + ' has been awarded ' + pxpamt + ' XP, ' + (pcpamt/100) + ' GP, and ' + (ptpamt/2) + ' TP.');
+                        let ptpamt = (noTP ? 0 :(row.level < 11 ? (row.level < 5 ? 2 : 4) : (row.level < 17 ? 6 : 8)));
+                        message.channel.send(row.name + ' has been awarded ' + pxpamt + ' XP, ' + (pcpamt/100) + ' GP, and ' + (ptpamt/2) + ' TP.');
 
                         // Process XP
                         let increase = 0;
                         for (i = 0; row.xp + pxpamt >= thresholds[row.level+i]; i++) increase++;
-                        if (increase > 1) message.guild.channels.find("name", settings.adminchat).send(recipient.toString() + " has leveled up more than once. **Check that shit!**");
+                        if (increase > 1) message.guild.channels.find("name", settings.adminchat).send(recipient.toString() + "'s character ("+row.name+") has leveled up more than once. **Check that shit!**");
                         if (increase > 0) message.channel.send('__**CONGRATULATIONS, ' + row.name.toUpperCase() + '!**__\n' + row.name + ' is now level **' + (row.level+increase) + '**!\n' +
                             bot.emojis.find("name", "praise") + bot.emojis.find("name", "disgust") + bot.emojis.find("name", "SweatSouls") + bot.emojis.find("name", "nat20"));
                         sql.run(`UPDATE charlog SET level = ${row.level + increase} WHERE userId = ${recipient.id}`);
@@ -173,7 +175,7 @@ module.exports.run = async (bot, message, args) => {
                     let cpamt = xpamt*cpxpRatios[level];
                     let tpamt = (level < 11 ? (level < 5 ? 1 : 2) : (level < 17 ? 3 : 4));
 
-                    message.channel.send(message.author.toString() + ' has been awarded ' + xpamt + ' XP, ' + (cpamt/100) + ' GP, and ' + (tpamt/2.0) + ' TP.');
+                    message.channel.send(rowDM.name + ' has been awarded ' + xpamt + ' XP, ' + (cpamt/100) + ' GP, and ' + (tpamt/2.0) + ' TP.');
                     let increase = 0;
                     for (i = 0; rowDM.xp + xpamt >= thresholds[level+i]; i++) increase++;
                     if (increase > 1) message.guild.channels.find("name", settings.adminchat).send(message.author.toString() + " has leveled up more than once from GMing. **Check that shit!**");
@@ -190,7 +192,7 @@ module.exports.run = async (bot, message, args) => {
             });
             break;
         case 'transfer':
-            if (!funcs.testing(message) && (message.channel.name != 'auction-house' && message.channel.name != 'hall-of-dms' && message.channel.name != 'guild-hall')) return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-dms') + '.');
+            if (!funcs.testing(message) && (message.channel.name != 'auction-house' && message.channel.name != 'hall-of-dms' && message.channel.name != 'guild-hall'&& message.channel.name != 'business')) return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-dms') + '.');
             if (!args[1]) return message.channel.send('Please specify a valid amount of GP.');
             if (args[1][0] == '.') args[1] = '0' + args[1];
             if (isNaN(args[1]) || parseFloat(args[1]) <= 0 || parseInt(parseFloat(args[1])*100) - parseFloat(args[1])*100 != 0) return message.channel.send('Please specify a valid number of GP.');
@@ -201,14 +203,14 @@ module.exports.run = async (bot, message, args) => {
             if (trecipient.id != '429691339270258688' && message.channel.name == 'guild-hall') return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-dms') + '.');
             let tamt = parseFloat(args[1])*100;
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                if (!row) message.channel.send("We haven't got a file for you, kid. You need to be initiated into the guild before you can transfer cash to a hero.");
+                if (!row) message.channel.send("We haven't got a file for you, kid. You need to be initiated into the guild before you can transfer cash to an adventurer.");
                 else {
                     if (tamt > row.cp) message.channel.send("You cannot spend more gp than you have.");
                     else {
                         sql.get(`SELECT * FROM charlog WHERE userId ="${trecipient.id}"`).then(row2 => {
-                            if (trecipient.id == '429691339270258688') message.channel.send('You have donated ' + args[1] + ' GP to the Heroes Guild of Remnant. Thanks for your support.');
+                            if (trecipient.id == '429691339270258688') message.channel.send('You have donated ' + args[1] + " GP to the Adventurer's Guild of Remnant. Thanks for your support.");
                             if (!row2) return message.channel.send('You cannot send gold to someone who isn\'t initiated.');
-                            else {message.channel.send(message.author.toString() + ' has transfered ' + args[1] + ' GP to ' + trecipient.toString() + '.');
+                            else {message.channel.send(row.name + ' has transfered ' + args[1] + ' GP to ' + row2.name + '.');
                             sql.run(`UPDATE charlog SET cp = ${row.cp - tamt} WHERE userId = ${message.author.id}`);
                             sql.run(`UPDATE charlog SET cp = ${row2.cp + tamt} WHERE userId = ${trecipient.id}`);
                             }
@@ -242,11 +244,11 @@ module.exports.run = async (bot, message, args) => {
             if (message.channel.name != 'hall-of-dms' && !funcs.testing(message)) return message.channel.send("Important paperwork such as this must be notarized in triplicate. Go to the " +
                 message.guild.channels.find('name', 'hall-of-dms') + ' if you wish to retire.');
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                if (!row || !message.member.roles.find('name', 'Guild Member')) return message.channel.send("According to my records, you are not a member of our guild.");
+                if (!row || !funcs.hasPermission('swap', message)) return message.channel.send("According to my records, you are not a member of our guild.");
                 else {
                     if (!args[1]) return message.channel.send('Are you sure you wish to retire? If so, type ,retire YES (case-sensitive).');
                     if (args[1] + ' ' + args[2] != 'YES (case-sensitive).') return message.channel.send('If you wish to retire, type "**,retire YES (case-sensitive).**"');
-                    message.channel.send(message.author.toString() + '\n' + row.name + ' has retired from the Heroes Guild of Remnant.');
+                    message.channel.send(message.author.toString() + '\n' + row.name + " has retired from the Adventurer's Guild of Remnant.");
                     sql.run(`DELETE FROM charlog WHERE userId ="${message.author.id}"`);
                     message.delete();
                 }
@@ -286,7 +288,7 @@ module.exports.run = async (bot, message, args) => {
                             case 'xp':
                                 if (row.xp + amt < 0) message.channel.send('You cannot cause someone to have less than 0 ' + args[2] + '.');
                                 else {
-                                    let output = message.author.toString() + ' has ' + (amt > 0 ? 'allocated ' : 'deducted ' ) + Math.abs(amt) + ' XP ' + (amt>0 ? 'to ' : 'from ') + recipient.toString() + '.' +
+                                    let output = message.author.toString() + ' has ' + (amt > 0 ? 'allocated ' : 'deducted ' ) + Math.abs(amt) + ' XP ' + (amt>0 ? 'to ' : 'from ') + row.name + '.' +
                                         '\n**New XP Total:** ' + (row.xp + amt);
                                     let change = 0;
                                     for (i = 0; row.xp + amt >= thresholds[row.level+i]; i++) change++;
@@ -302,7 +304,7 @@ module.exports.run = async (bot, message, args) => {
                                 amt *= 100
                                 if (row.cp + amt < 0) message.channel.send('You cannot cause someone to have less than 0 ' + args[2] + '.');
                                 else {
-                                    message.channel.send(message.author.toString() + ' has ' + (amt > 0 ? 'allocated ' : 'deducted ' ) + Math.abs(amt/100) + ' GP ' + (amt>0 ? 'to ' : 'from ') + recipient.toString() + '.' +
+                                    message.channel.send(message.author.toString() + ' has ' + (amt > 0 ? 'allocated ' : 'deducted ' ) + Math.abs(amt/100) + ' GP ' + (amt>0 ? 'to ' : 'from ') + row.name + '.' +
                                         '\n**New GP Total:** ' + ((row.cp + amt)/100) + ' GP');
                                     sql.run(`UPDATE charlog SET cp = ${row.cp + amt} WHERE userId = ${recipient.id}`);
                                 }
@@ -311,7 +313,7 @@ module.exports.run = async (bot, message, args) => {
                                 amt *= 2;
                                 if (row.tp + Math.round(amt) < 0) message.channel.send('You cannot cause someone to have less than 0 ' + args[2] + '.');
                                 else {
-                                    message.channel.send(message.author.toString() + ' has ' + (amt > 0 ? 'allocated ' : 'deducted ' ) + Math.abs(amt/2) + ' TP ' + (amt>0 ? 'to ' : 'from ') + recipient.toString() + '.' +
+                                    message.channel.send(message.author.toString() + ' has ' + (amt > 0 ? 'allocated ' : 'deducted ' ) + Math.abs(amt/2) + ' TP ' + (amt>0 ? 'to ' : 'from ') + row.name + '.' +
                                         '\n**New TP Total:** ' + ((row.tp + amt)/2));
                                     sql.run(`UPDATE charlog SET tp = ${row.tp + amt} WHERE userId = ${recipient.id}`);
                                 }
@@ -337,7 +339,8 @@ module.exports.run = async (bot, message, args) => {
                     if (damt > row.cp) message.channel.send("You cannot donate more GP than you have.");
                     else {
                         sql.get(`SELECT * FROM charlog WHERE userId = 429691339270258688`).then(row2 => {
-                            message.channel.send(message.author.toString() + ' has donated ' + args[1] + ' GP to the Heroes Guild of Remnant.');
+                            //message.channel.send(message.author.toString() + ' has donated ' + args[1] + " GP to the Adventurer's Guild of Remnant.");
+                            message.channel.send(row.name + ' has donated ' + args[1] + " GP to the Adventurer's Guild of Remnant.");
                             sql.run(`UPDATE charlog SET cp = ${row.cp - damt} WHERE userId = ${message.author.id}`);
                             sql.run(`UPDATE charlog SET cp = ${row2.cp + damt} WHERE userId = 429691339270258688`);
                             message.delete();
@@ -353,6 +356,16 @@ module.exports.run = async (bot, message, args) => {
         case 'auction':
             if (!funcs.testing(message) && message.channel.name != 'auction-house') return message.channel.send("Please make auction payments in the " + message.guild.channels.find('name', 'auction-house') + '.');
             if (!args[1]) return message.channel.send('Please specify a valid amount of GP.');
+            else if (args[1] == 'on') {
+                if(message.member.roles.find("name", "auction-folks")) return message.channel.send("Auction notifications are already enabled for you, ya dingus!")
+                message.member.addRole(message.guild.roles.find(r => r.name === 'auction-folks'));
+                return message.channel.send("Auction House notifications enabled.");
+            }
+            else if (args[1] == 'off') {
+                if(!message.member.roles.find("name", "auction-folks")) return message.channel.send("Auction notifications are already disabled for you, ya dingus!")
+                message.member.removeRole(message.member.guild.roles.find("name", "auction-folks"));
+                return message.channel.send("Auction House notifications disabled.");
+            }
             if (args[1][0] == '.') args[1] = '0' + args[1];
             if (isNaN(args[1]) || parseFloat(args[1]) <= 0 || parseInt(parseFloat(args[1])*100) - parseFloat(args[1])*100 != 0) return message.channel.send('Please specify a valid number of GP.');
             if (!args[2]) return message.channel.send('Please specify whose auction you won.');
@@ -361,7 +374,7 @@ module.exports.run = async (bot, message, args) => {
             if (aucrecipient.id == message.author.id) message.channel.send("Fuck off turd.");
             let winningbid = parseFloat(args[1])*100;
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                if (!row) message.channel.send("We haven't got a file for you, kid. You need to be initiated into the guild before you can transfer cash to a hero.");
+                if (!row) message.channel.send("We haven't got a file for you, kid. You need to be initiated into the guild before you can transfer cash to an adventurer.");
                 else {
                     if (winningbid > row.cp) message.channel.send("You cannot spend more gp than you have.");
                     else {
@@ -404,6 +417,12 @@ module.exports.run = async (bot, message, args) => {
             break;
         case 'swap':
             // check some stuff
+            if (!funcs.testing(message) && message.channel.name != 'bot-commands') {
+                message.author.send("Please swap characters in the " + message.guild.channels.find('name', 'bot-commands') + ' channel.');
+                message.delete();
+                return;
+            }
+
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
                 if (!row) {
                     if (!bot.vault[message.author.id]) {
@@ -417,11 +436,11 @@ module.exports.run = async (bot, message, args) => {
 
                     // get inactive character information and make it active
                     sql.run("INSERT INTO charlog (userId, name, level, xp, cp, tp) VALUES (?, ?, ?, ?, ?, ?)", [message.author.id, v2Name, v2Level, v2XP, v2CP, v2TP]);
-                    delete bot.vault[message.member.id];
                     fs.writeFile('./vault.json', JSON.stringify(bot.vault, null, 4), err => {
                         if (err) throw err;
                     });
-                    message.channel.send(message.author.toString() + ' has made ' + v2name + ' active.');
+                    delete bot.vault[message.author.id];
+                    message.channel.send(message.author.toString() + ' has made **' + v2Name + '** active.');
                     return;
                 }
                 // Active character info
@@ -434,7 +453,7 @@ module.exports.run = async (bot, message, args) => {
                 // Vault character info
                 if (!bot.vault[message.author.id]) {
                     sql.run(`DELETE FROM charlog WHERE userId = ${message.author.id}`);
-                    message.channel.send(message.author.toString() + ' has made ' + tempName + ' inactive.');
+                    message.channel.send(message.author.toString() + ' has made **' + tempName + '** inactive.');
                 }
                 else {
                     let vName = bot.vault[message.author.id].name;
@@ -449,7 +468,7 @@ module.exports.run = async (bot, message, args) => {
                     }, err => {
                         if (err) throw err;
                     });
-                    message.channel.send(message.author.toString() + ' has made ' + vName + ' active. ' + tempName + ' is now in the vault.');
+                    message.channel.send(message.author.toString() + ' has made **' + vName + '** active. **' + tempName + '** is now in the vault.');
                 }
 
                 bot.vault[message.member.id] = {
@@ -469,6 +488,15 @@ module.exports.run = async (bot, message, args) => {
                 message.channel.send("Some shit went wrong!");
             });
             break;
+        case 'testo':
+            if (!funcs.isNorrick(message)) return funcs.invalid(message);
+            sql.get("SELECT * FROM charlog WHERE userId = '185100688886464523' and upper(name) not LIKE '%KAVIER%'").then(asshat => {
+                console.log(asshat);
+                /*console.log("XP: "+asshat.xp);
+                console.log("GP: "+asshat.cp/100);
+                console.log("TP: "+asshat.tp/2);*/
+            });
+            break;
         default:
             return funcs.invalid(message);
     }
@@ -486,8 +514,26 @@ function initiate (sql, message, args, row, initiat) {
             ',initiate [CORRECTLY-SPELLED ADVENTURER NAME] [DISCORD TAG]'); // If improper format
         args.shift();
         let charname = args.join(' ');
-        message.channel.send(initiat.toString() + '\nWelcome to the Heroes Guild of Remnant, ' + charname + '!');
+        message.channel.send(initiat.toString() + "\nWelcome to the Adventurer's Guild of Remnant, " + charname + '!');
         sql.run("INSERT INTO charlog (userId, name, level, xp, cp, tp) VALUES (?, ?, ?, ?, ?, ?)", [initiat.id, charname, 2, 300, 0, 0]);
         initiat.addRole(message.guild.roles.find(r => r.name === 'Guild Member'));
+        initiat.removeRole(message.guild.roles.find(r => r.name === 'uninitiated'));
+
+        // Give out a healing pot
+        sql.get(`SELECT * FROM charlog WHERE userId = 429691339270258688`).then(row2 => {
+            if (!row2) message.channel.send('http://i0.kym-cdn.com/photos/images/original/001/282/535/c19.png');
+            else { // Reward and confirm
+                if (5000 > row2.cp) message.channel.send("Adventurer's Guild of Remnant is broke AF. Can't even donate one stinkin' healing pot!");
+                else {
+                    sql.run(`UPDATE charlog SET cp = ${row2.cp - 5000} WHERE userId = 429691339270258688`);
+                    message.channel.send("Due to complaints about decreased life expectancy, too few clerics, etc., and through the generosity of your fellow guild members, " + 
+                                        "we, the Adventurer's Guild of Remnant hereby bequeath to you **one free healing potion (standard variety)**. " + 
+                                         "Use it wisely.");
+                }
+            }
+        }, err2 => {
+            message.channel.send("WE'VE BEEN ROBBED!");
+        });
+
     } else return message.channel.send((initiat.id == message.author.id ? 'You must retire your current adventurer before you can initiate a new one.' : 'This person\'s current adventurer must retire before they can initiate a new one.'));
 }

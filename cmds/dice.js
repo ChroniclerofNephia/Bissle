@@ -26,6 +26,7 @@ module.exports.help = {
 }
 
 function rollOnce(message, args) { // Formats results of a single rollset
+    if (!args[1]) return message.channel.send('Okay sure. Roll what?');
     var output = message.author.toString() + '\n'
     let stringNsum = roll(message, args[1]); // tuple of rollset string and int sum
     if (!stringNsum[0]) return; // Encountered bad command in roll function

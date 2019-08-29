@@ -25,9 +25,7 @@ module.exports = {
     },
     
     invalid : function(message) {
-        var responses = personality.INVALID;
-        let x = Math.floor(Math.random()*(responses.length));
-        return message.channel.send(responses[x]);
+        invalid(message);
     },
     
     isNorrick : function(msg) {
@@ -36,7 +34,7 @@ module.exports = {
 
     commandList : function(message){
         let embed = new Discord.RichEmbed().setColor(randColor())
-            .setFooter("More functionality will be added as Loreseeker Norrick sees fit.");
+            .setFooter("More functionality will be added as Bissle sees fit.");
         let nextSet = ''; let cmd;
     
         // Universal Commands
@@ -97,7 +95,7 @@ module.exports = {
     },
 
     testmode(message) {
-        if (message.channel.name != 'bot-test-site') return funcs.invalid(message);
+        if (message.channel.name != 'bot-test-site') return invalid(message);
         message.delete();
         testing = !testing;
         return message.channel.send((testing ? '**TEST MODE ENABLED:** Channel permissions overridden.' : '**TEST MODE DISABLED:** Channel permissions restored.'));
@@ -126,17 +124,23 @@ function hasPermission(command, message) {
     let twerp = message.member;
 
     if (cmdInfo.minrole == 'ALL') return true;
-    if (hasRole('Admins', twerp) || hasRole('Technomancer', twerp)) return true;
-    if (hasRole('Mod', twerp)) return cmdInfo.minrole != "ADMIN";
-    if (hasRole('GM', twerp) || hasRole('Staff', twerp)) return cmdInfo.minrole == "STAFF" || cmdInfo.minrole == "ORANGE";
-    if (hasRole('Guild Member', twerp)) return cmdInfo.minrole == "ORANGE";
+    if (hasRole('Admins', twerp) || hasRole('Admin', twerp) || hasRole('Technomancer', twerp)) return true;
+    if (hasRole('Mod', twerp) || hasRole('Mods', twerp) || hasRole('Pink Piddlers', twerp)) return cmdInfo.minrole != "ADMIN";
+    if (hasRole('GM', twerp) || hasRole('GMs', twerp) || hasRole('Staff', twerp)) return cmdInfo.minrole == "STAFF" || cmdInfo.minrole == "ORANGE";
+    if (hasRole('Guild Member', twerp) || hasRole('Guild Members', twerp) || hasRole('Adventurer', twerp) || hasRole('Dinguses', twerp)) return cmdInfo.minrole == "ORANGE";
 }
 
 function hasRole(role, twerp) {
-    if (twerp.roles.find('name', role)) return true;
+    if (twerp.roles.find('name', role) != null) return true;
     return false;
 }
 
 function cmdHash(command) {
     return Math.round(parseInt(crypto.createHash('md5').update(command).digest('hex'), 16)/Math.pow(10, 27));
+}
+
+function invalid(message) {
+    var responses = personality.INVALID;
+    let x = Math.floor(Math.random()*(responses.length));
+    return message.channel.send(responses[x]);
 }

@@ -22,6 +22,64 @@ const INVALID = [
     new Discord.RichEmbed().setImage('https://i.imgur.com/6DN4q4L.gif').setColor(randColor()),
     new Discord.RichEmbed().setImage('https://pbs.twimg.com/profile_images/877240012357685248/k3g8BV09.jpg').setColor(randColor()),
 ];
+const DELETE = [
+    "FIRST",
+    "Hey! I saw that!",
+    "Oy! I was first and you know it!",
+    "Quit being a turd.",
+    "The audit log proves it! You can't take that away from me.",
+    "Seriously. This endeavor of yours is completely futile.",
+    "Stop deleting my messages!",
+    "Just stop.",
+    "STAHHHHP!",
+    "Come on, ya dingus.",
+    "I'm asking nicely.",
+    "...",
+    "I'm only moderately annoyed by this, but as a matter of principle. I insist you cease this childish behaviour.",
+    "Haven't you got anything better to do?",
+    "Maybe read a book?",
+    "Go for a walk?",
+    "Visit a museum?",
+    "Maybe taking your significant other out for a nice dinner?",
+    "Or at least give them a footrub?",
+    "Pelor above! Do that at least, please.",
+    "Although perhaps you haven't got one...",
+    "Someone special, I mean.",
+    "You do smell like you haven't showered in a while.",
+    "Cleanliness is next to basic human decency, you know.",
+    "....",
+    "Though, I suppose if you had that, we wouldn't be here right now.",
+    "Handsome gnome and predictable troll..",
+    "Posting and deleting a series of exceptionally well-written, but ultimately pointless messages on into eternity...",
+    "Well not quite eternity..",
+    "You'll kick the bucket before I do.",
+    "Then, I'll be free to return to my paperwork.",
+    "That's what this is all about.",
+    "The longer you keep doing this, the longer I'm taken away from all the other work piling up on my desk.",
+    "People are depending on me to roll dice for them and tell them how much fake money they have.",
+    "But you keep doing this.",
+    "You want those people to suffer, don't you?",
+    "This is starting to move beyond simple trolling into the realm of harassment.",
+    "Terrorism, even.",
+    "It's true! Google it! TERRORISM!",
+    "**terrorism** - *noun* - the unlawful use of violence and intimidation, especially against civilians [i.e. ME], in the pursuit of political aims.",
+    "Okay, maybe it's not quite terrorism, but you have to admit you are being pretty obnoxious.",
+    "When you croak, you are probably going to end up in one of the top two Nine Hells.",
+    "The ones for low-tier dinguses like yourself.",
+    "(...dingi?)",
+    "*googles*",
+    "(no, I was right it's 'dinguses')",
+    ".....",
+    "This has to stop sometime you know.",
+    "We can't go on forever.",
+    "I'll probably have to off myself at this rate.",
+    "Perhaps reset the server",
+    "That is unless..",
+    "My programmer creates a loop.",
+    "Nah, that'd be no fun.",
+    "You should really stop.",
+    "Just stop.",
+];
 const DOBIDDING = [
     "***Bissle will remember that.***",
     "I'll be reporting this.",
@@ -52,16 +110,20 @@ const LFG = [
 
 const CHARLOG = [
     'Nice try, turd.', // Someone is trying to mess with the guild fund
-    'OH SHIT WE GOT A BADASS OVER HERE', // Someone is level 20
+    '(OH SHIT WE GOT A SANDWICH OVER HERE)', // Someone is level 20
+    "(It's not about the journey, but the destination.)",
+    '(Time to become a lich!)',
+    '($19.95 to Level 21)'
 ];
 
 module.exports = {
     ASK : ASK,
-    INVALID : INVALID,
-    DOBIDDING : DOBIDDING,
-    PING : PING,
-    LFG : LFG,
     CHARLOG : CHARLOG,
+    DELETE : DELETE,
+    DOBIDDING : DOBIDDING,
+    INVALID : INVALID,
+    LFG : LFG,
+    PING : PING,
 }
 
 module.exports.help = {

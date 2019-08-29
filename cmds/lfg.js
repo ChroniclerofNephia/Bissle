@@ -14,19 +14,30 @@ module.exports.run = async (bot, message, args) => {
     if (!args[1]) { // TOGGLE
         if(!funcs.hasRole('LFG', message.member))
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                if (!row) return message.channel.send(pers.LFG[0]);
-                if (row.level < 5) addlfg(bot, message, 'low');
-                else if (row.level < 11) addlfg(bot, message, 'mid');
-                else if (row.level < 17) addlfg(bot, message, 'high');
-                else addlfg(bot, message, 'epic');
+                if (!row) message.channel.send(pers.LFG[0]);
+                else {
+                    if (row.level < 5) addlfg(bot, message, 'low');
+                    else if (row.level < 11) addlfg(bot, message, 'mid');
+                    else if (row.level < 17) addlfg(bot, message, 'high');
+                    else addlfg(bot, message, 'epic');
+                    if (bot.lfgList == null)
+                        message.channel.send(listlfg(bot)).then(msg => {
+                            bot.lfgList = msg.id;
+                        });
+                    else
+                        message.channel.messages.find("id", bot.lfgList).edit(listlfg(bot));
+                }
             }, err => {
-                return message.channel.send(pers.LFG[0]);
+                bot.lfgList = null;
+                message.channel.send(pers.LFG[0]);
             });
-        else removelfg(bot, message);
+        else removelfg(bot, message, null, false);
     }
     else switch(args[1].toLowerCase()) { // INTERPRET EXTRA COMMAND
         case 'list':
-            message.channel.send(listlfg(bot, message));
+            message.channel.send(listlfg(bot)).then(msg => {
+                bot.lfgList = msg.id;
+            });
             break;
         case 'epic':
         case 'high':
@@ -40,18 +51,39 @@ module.exports.run = async (bot, message, args) => {
             if (args[2]) gorp = args[2].toLowerCase();
             if (!args[2] || !(gorp == 'low' || gorp == 'mid' || gorp == 'high' || gorp == 'epic' || gorp == 'pbp'))
                 sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
-                    if (!row) return message.channel.send(pers.LFG[0]);
-                    if (row.level < 5) addlfg(bot, message, 'low');
-                    else if (row.level < 11) addlfg(bot, message, 'mid');
-                    else if (row.level < 17) addlfg(bot, message, 'high');
-                    else addlfg(bot, message, 'epic');
+                    if (!row) message.channel.send(pers.LFG[0]);
+                    else {
+                        if (row.level < 5) addlfg(bot, message, 'low');
+                        else if (row.level < 11) addlfg(bot, message, 'mid');
+                        else if (row.level < 17) addlfg(bot, message, 'high');
+                        else addlfg(bot, message, 'epic');
+                    }
                 }, err => {
-                    return message.channel.send(pers.LFG[0]);
+                    bot.lfgList = null;
+                    message.channel.send(pers.LFG[0]);
                 });
             else addlfg(bot, message, gorp);
             break;
         case 'remove':
-            removelfg(bot, message, args[2]);
+            removelfg(bot, message, args[2], false);
+            break;
+        case 'purge':
+            if (!funcs.hasPermission('nonsense', message)) return funcs.invalid(message);
+            if (!args[2]) return message.channel.send('Please specify the number of days beyond which folks should be purged from lfg.\n(e.g. **,lfg purge 7**)');
+            if (isNaN(args[2])) return message.channel.send('Please choose a valid number of days.');
+            let lfg = bot.lfg; let purgeMsg = '';
+            if (args[2] == -1) message.channel.send('***PPPUUURRRRRRRRRRRRRGGGEEE!!!!***');
+            let someonePurged = false;
+            for (i in lfg) { // ASSEMBLE NAMES AND WAITS
+                let wait = (Date.now() - lfg[i].time)/86400000;
+                if (wait > parseFloat(args[2]) && (lfg[i].low || lfg[i].mid || lfg[i].high || lfg[i].epic || lfg[i].pbp)) {
+                    purgeMsg += lfg[i].name + ' has been purged from LFG.\n';
+                    removelfg(bot, message, null, true, i);
+                    someonePurged = true;
+                }
+            }
+            if (!someonePurged) purgeMsg += 'No guild members have been LFG for that long. As such, no one has been purged. Let me go back to sleep, ya turd!'
+            message.channel.send(purgeMsg);
             break;
         default:
             return funcs.invalid(message);
@@ -65,7 +97,7 @@ module.exports.help = {
 
 function addlfg(bot, message, tier=null) {
     if (!tier || !(tier == 'low' || tier == 'mid' || tier == 'high' || tier == 'epic' || tier == 'pbp')) return message.channel.send('**OH Q@&%*#** One moment, I dropped all my lemons.');
-    if (!funcs.hasRole('LFG', message.member)) // ADD LFG, AND APPROPRIATE TIER
+    if (!funcs.hasRole('LFG', message.member) || !bot.lfg[message.member.id]) // ADD LFG, AND APPROPRIATE TIER
         bot.lfg[message.member.id] = {
             name: message.member.nickname || '<@!'+message.member.id+'>',
             guild: message.guild.id,
@@ -78,9 +110,9 @@ function addlfg(bot, message, tier=null) {
         }
     else { // SPECIFIED TIER ONLY
         bot.lfg[message.member.id] = {
-            name: message.member.nickname || '<@!'+m.id+'>',
+            name: message.member.nickname || '<@!'+message.member.id+'>',
             guild: message.guild.id,
-            time: bot.lfg[message.member.id].time,
+            time: bot.lfg[message.member.id].time || Date.now(),
             low: bot.lfg[message.member.id].low || tier == 'low',
             mid: bot.lfg[message.member.id].mid || tier == 'mid',
             high: bot.lfg[message.member.id].high || tier == 'high',
@@ -99,59 +131,78 @@ function addlfg(bot, message, tier=null) {
     fs.writeFile('./lfg.json', JSON.stringify(bot.lfg, null, 4), err => {
         if (err) throw err;
     });
-
     message.channel.send(message.author.toString() + " is LFG for a " + (tier == 'pbp' ? "PBP" : tier+"-level") + " game.");
 }
 
-function removelfg(bot, message, tier=null) {
+function removelfg(bot, message, tier=null, purge=false, personID=null) {
     let role = message.guild.roles.find('name', 'LFG' + (!tier ? '' : '-'+tier));
-    if (!role || !message.member.roles.has(role.id))
-        return funcs.invalid(message);
-
-    if (!tier || !bot.lfg[message.member.id]) { // TURN EVERYTHING OFF
-        message.member.removeRole(message.member.guild.roles.find("name", "LFG-epic"));
-        message.member.removeRole(message.member.guild.roles.find("name", "LFG-high"));
-        message.member.removeRole(message.member.guild.roles.find("name", "LFG-mid"));
-        message.member.removeRole(message.member.guild.roles.find("name", "LFG-low"));
-        message.member.removeRole(message.member.guild.roles.find("name", "LFG-pbp"));
-        message.member.removeRole(role);
-        if (bot.lfg[message.member.id]) delete bot.lfg[message.member.id];
-        message.channel.send(message.author.toString() + " is no longer LFG.");
+    let removee = (purge ? message.guild.members.find('id', personID) : message.guild.member(message.member));
+    if (!removee) {
+        if (bot.lfg[personID]) delete bot.lfg[personID];
     }
-    else { // OR TURN ONE THING OFF
-        message.member.removeRole(role);
-        let stuff = [bot.lfg[message.member.id].time, bot.lfg[message.member.id].low, bot.lfg[message.member.id].mid, bot.lfg[message.member.id].high, bot.lfg[message.member.id].epic, bot.lfg[message.member.id].pbp];
-        delete bot.lfg[message.member.id];
-        bot.lfg[message.member.id] = {
-            name: message.member.nickname || '<@!'+m.id+'>',
-            guild: message.guild.id,
-            time: stuff[0],
-            low: stuff[1] && tier != 'low',
-            mid: stuff[2] && tier != 'mid',
-            high: stuff[3] && tier != 'high',
-            epic: stuff[4] && tier != 'epic',
-            pbp: stuff[5] && tier != 'pbp',
+    else {
+        if (!role || !removee.roles.has(role.id))
+            return funcs.invalid(message);
+        if (purge) {
+            removee.removeRole(removee.guild.roles.find("name", "LFG-pbp"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-epic"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-high"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-mid"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-low"));
+            removee.removeRole(role);
+            delete bot.lfg[removee.id];
         }
-        let q = bot.lfg[message.member.id]
-        if (!q.epic && !q.high && !q.mid && !q.low && !q.pbp) {
-            delete bot.lfg[message.member.id];
-            message.member.removeRole(message.member.guild.roles.find("name", "LFG"));
+        else if (!tier || !bot.lfg[removee.id]) { // TURN EVERYTHING OFF
+            removee.removeRole(removee.guild.roles.find("name", "LFG-epic"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-high"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-mid"));
+            removee.removeRole(removee.guild.roles.find("name", "LFG-low"));
+            if (!personID) removee.removeRole(removee.guild.roles.find("name", "LFG-pbp"));
+            removee.removeRole(role);
+            if (bot.lfg[removee.id]) delete bot.lfg[removee.id];
             message.channel.send(message.author.toString() + " is no longer LFG.");
-        } else message.channel.send(message.author.toString() + " is no longer LFG for a " + (tier == 'pbp' ? "PBP" : tier+"-level") + " game.");
+        }
+        else { // OR TURN ONE THING OFF
+            message.member.removeRole(role);
+            let stuff = [bot.lfg[message.member.id].time, bot.lfg[message.member.id].low, bot.lfg[message.member.id].mid, bot.lfg[message.member.id].high, bot.lfg[message.member.id].epic, bot.lfg[message.member.id].pbp];
+            delete bot.lfg[message.member.id];
+            bot.lfg[message.member.id] = {
+                name: message.member.nickname || '<@!'+m.id+'>',
+                guild: message.guild.id,
+                time: stuff[0],
+                low: stuff[1] && tier != 'low',
+                mid: stuff[2] && tier != 'mid',
+                high: stuff[3] && tier != 'high',
+                epic: stuff[4] && tier != 'epic',
+                pbp: stuff[5] && tier != 'pbp',
+            }
+            let q = bot.lfg[message.member.id]
+            if (!q.epic && !q.high && !q.mid && !q.low && !q.pbp) {
+                delete bot.lfg[message.member.id];
+                message.member.removeRole(message.member.guild.roles.find("name", "LFG"));
+                message.channel.send(message.author.toString() + " is no longer LFG.");
+            } else {message.channel.send(message.author.toString() + " is no longer LFG for a " + (tier == 'pbp' ? "PBP" : tier+"-level") + " game.");}
+        }
     }
-
     fs.writeFile('./lfg.json', JSON.stringify(bot.lfg), err => {
         if (err) throw err;
     });
+
 }
 
 function toggle(bot, message, tier=null) {
     if (!tier) return funcs.invalid(message);
     if (message.member.roles.find("name", 'LFG-'+tier)) removelfg(bot, message, tier);
     else addlfg(bot, message, tier);
+    if (bot.lfgList == null)
+            message.channel.send(listlfg(bot)).then(msg => {
+                bot.lfgList = msg.id;
+            });
+        else
+            message.channel.messages.find("id", bot.lfgList).edit(listlfg(bot));
 }
 
-function listlfg(bot, message) {
+function listlfg(bot) {
     let lfg = bot.lfg;
     let lfgepic = []; let lfghigh = []; let lfgmid = []; let lfglow = []; let lfgpbp = []; let twerp;
     for (i in lfg) { // ASSEMBLE NAMES AND WAITS

@@ -204,7 +204,7 @@ module.exports.run = async (bot, message, args) => {
         'His friend says, "Well, I\'ll make you a bet. If I can guess how many potions you have in that bag, you have to give me one."\n' +
         'The half-orc says, "I\'ll tell you what. If you can tell me how many potions I have in this bag, I\'ll give you both of them."',
         "He didn't have the guts.",
-        'I think it\'s all coming back to me!" he said.\n' +
+        '"I think it\'s all coming back to me!" he said.\n' +
         'Then the wind changed.',
         '"Dam!"',
         "They were luters.",

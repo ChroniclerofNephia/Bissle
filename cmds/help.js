@@ -60,7 +60,8 @@ module.exports.run = async (bot, message, args) => {
                 "**"+PREFIX+"lfg [low/mid/high]** - Manually toggles LFG role for specific tier.\n" +
                 "**"+PREFIX+"lfg pbp** - Manually toggles LFG role for Play-By-Post games.\n" +
                 "**"+PREFIX+"lfg list** - Prints list of all guild members currently LFG.\n" +
-                "**"+PREFIX+"lfg [add/remove]** - Same as **lfg** toggle, but only works one way.\n")
+                "**"+PREFIX+"lfg [add/remove]** - Same as **lfg** toggle, but only works one way.\n"+
+                (funcs.hasPermission('nonsense', message) ? "**__ADMIN ONLY__\n"+PREFIX+"lfg purge [# DAYS]** - Removes guild members who have been on the list for more than the specified number of days." : ''))
             .setFooter('If you forget to remove yourself from LFG before bed, Bissle will send you threatening PMs.');
             break;
         case 'dm':
@@ -141,9 +142,10 @@ module.exports.run = async (bot, message, args) => {
             .setFooter('Papa Bissle needs a new pair of Boots of the Winterlands.');
             break;
         case 'auction':
-            embed.addField(PREFIX+'auction [#GP] [AUCTION-HOLDER\'S DISCORD TAG]',
+            embed.addField('**'+PREFIX+'auction [#GP] [AUCTION-HOLDER\'S DISCORD TAG]**',
                 "Pay the winning bid, with 10% automatically taxed to the auction house.\n" +
-                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)")
+                "Include silvers and coppers by using decimals. (i.e. 13.37 gp = 13 gp, 3 sp, and 7 cp)\n")
+                .addField('**'+PREFIX+'auction on/off**', 'Enable/disable auction house notifications.')
             .setFooter('I don\'t care what anyone says; 1 gp increases are a legitimate tactic.');
             break;
         case 'charinfo': // Staff-rolling for third party's extra info
@@ -171,9 +173,9 @@ module.exports.run = async (bot, message, args) => {
         case 'rewards':
         case 'reward': // Rewards Log Only
             embed.addField(PREFIX+'reward [#XP] [#GP] [DISCORD TAGS]',
-                "Distributes mission rewards to tagged Guild Members. 1 TP automatically rewarded.\n" +
-                "Amounts provided should be per adventurer.\n" +
-                "(i.e. **,reward 5 .01 @Tad @Ahri** gives 5 XP and 1 copper to each garbage druid listed)\n" +
+                "Distributes rewards to tagged Guild Members. List amounts per player.\n" +
+                "TP automatically calculated. To award no TP, add a 0 after gp.\n" +
+                "(i.e. **,reward 5 .01 0 @Tad @Ahri** gives 5 XP, 1 copper, and 0 TP to each turd listed)\n" +
                 'Distributing different amounts to different players will require separate entries.\n' + 
                 "This command can only be executed from the " + message.guild.channels.find("name", "rewards-log") + ' channel.')
             .setFooter("Ping an Admin or Mod if you screw something up.");
