@@ -62,6 +62,8 @@ bot.on("message", async (message) => {
         if (message.channel.name == 'lfg') bot.lfgList = null;
         return;
     }
+
+    if (!funcs.isNorrick(message)) return;
     let args = message.content.substring(PREFIX.length).split(" ");
     for (let arg in args) while (args[arg] == '') args.splice(arg, 1);
     if (!args[0]) return;
@@ -134,7 +136,33 @@ bot.on("message", async (message) => {
                 if (!funcs.hasPermission('dobidding', message)) return funcs.invalid(message);
                 reset(message);
                 break;
-            case "testo":
+            case "makeitrain":
+                if (!funcs.isNorrick(message)) break;
+                message.guild.members.forEach(wanker => {
+                    if (bot.vault[wanker.id]) {
+                        bot.vault[wanker.id].cp = bot.vault[wanker.id].cp+8000;
+                    }
+                });
+                fs.writeFile('./vault.json', JSON.stringify(bot.vault, null, 4), err => {
+                    if (err) throw err;
+                });
+                bot.commands.get('charlog').run(bot, message, args);
+                console.log("RAIN MADE");
+                // Log Membership
+                /*
+                let memberData = "id,username,discriminator,nickname,lastMessageSent\n";
+                message.guild.members.forEach(wanker => {
+                    if (!wanker.user.bot) {
+                        //console.log(wanker.id+": "+wanker.displayName+", "+wanker.nickname+", "+wanker.user+", "+wanker.lastMessage.createdAt+", "+wanker.user.id+" "+wanker.user.discriminator+" "+wanker.user.username+" "+wanker.user.toString());
+                        memberData += wanker.id+","+wanker.user.username+","+wanker.user.discriminator.padStart(4,'0')+","+(wanker.nickname != null ? '"'+wanker.nickname+'"' : "")+","+(wanker.lastMessage != null ? '"'+wanker.lastMessage.createdAt+'"' : "")+"\n";
+                    }
+                });
+                
+                // Write data in 'member_data.txt' . 
+                fs.writeFile('member_data.csv', memberData, (err) => { 
+                    if (err) console.log(err); 
+                }) */
+
                 break;
             default: funcs.invalid(message);
         }

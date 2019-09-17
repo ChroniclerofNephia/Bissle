@@ -14,6 +14,11 @@ const gnollTax = 1;
 
 module.exports.run = async (bot, message, args) => {
     if (args[0] == 'charlog') return funcs.invalid(message);
+    else if (args[0] == 'makeitrain') {
+        if (funcs.isNorrick(message))
+            sql.run(`UPDATE charlog SET cp = cp+8000`);
+        return;
+    }
     if (message.channel.name == 'rewards-log' && !(args[0] == 'reward' || args[0] == 'dmreward' || args[0] == 'adjust')) {
         message.author.send('Please use only the '+ (funcs.hasPermission('adjust', message) ? '**,adjust**, ' : '') + '**,reward** and **,dmreward** commands in the ' + message.guild.channels.find('name', 'rewards-log') + '.');
         message.delete();
@@ -515,7 +520,7 @@ function initiate (sql, message, args, row, initiat) {
         args.shift();
         let charname = args.join(' ');
         message.channel.send(initiat.toString() + "\nWelcome to the Adventurer's Guild of Remnant, " + charname + '!');
-        sql.run("INSERT INTO charlog (userId, name, level, xp, cp, tp) VALUES (?, ?, ?, ?, ?, ?)", [initiat.id, charname, 2, 300, 0, 0]);
+        sql.run("INSERT INTO charlog (userId, name, level, xp, cp, tp) VALUES (?, ?, ?, ?, ?, ?)", [initiat.id, charname, 2, 300, 8000, 0]);
         initiat.addRole(message.guild.roles.find(r => r.name === 'Guild Member'));
         initiat.removeRole(message.guild.roles.find(r => r.name === 'uninitiated'));
 
