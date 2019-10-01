@@ -144,7 +144,7 @@ module.exports.run = async (bot, message, args) => {
                         let pxpamt = parseInt(args[1]);
                         let pcpamt = parseFloat(args[2])*100;
                         let ptpamt = (noTP ? 0 :(row.level < 11 ? (row.level < 5 ? 2 : 4) : (row.level < 17 ? 6 : 8)));
-                        message.channel.send(row.name + ' has been awarded ' + pxpamt + ' XP, ' + (pcpamt/100) + ' GP, and ' + (ptpamt/2) + ' TP.');
+                        message.channel.send(row.name + ' ('+recipient.toString()+') has been awarded ' + pxpamt + ' XP, ' + (pcpamt/100) + ' GP, and ' + (ptpamt/2) + ' TP.');
 
                         // Process XP
                         let increase = 0;
@@ -214,8 +214,10 @@ module.exports.run = async (bot, message, args) => {
                     else {
                         sql.get(`SELECT * FROM charlog WHERE userId ="${trecipient.id}"`).then(row2 => {
                             if (trecipient.id == '429691339270258688') message.channel.send('You have donated ' + args[1] + " GP to the Adventurer's Guild of Remnant. Thanks for your support.");
-                            if (!row2) return message.channel.send('You cannot send gold to someone who isn\'t initiated.');
-                            else {message.channel.send(row.name + ' has transfered ' + args[1] + ' GP to ' + row2.name + '.');
+                            else {
+                                if (!row2) return message.channel.send('You cannot send gold to someone who isn\'t initiated.');
+                                else {message.channel.send(row.name + ' has transfered ' + args[1] + ' GP to ' + row2.name + '.');
+                            }
                             sql.run(`UPDATE charlog SET cp = ${row.cp - tamt} WHERE userId = ${message.author.id}`);
                             sql.run(`UPDATE charlog SET cp = ${row2.cp + tamt} WHERE userId = ${trecipient.id}`);
                             }
