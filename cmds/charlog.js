@@ -7,7 +7,7 @@ sql.open('./charlog.sqlite');
 
 const thresholds = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
 const dmRewardBracket = [25, 15, 20];
-const cpxpRatios = [-1, 27, 20, 9, 5, 15, 25, 31, 32, 35, 32, 48, 52, 79, 84, 87, 98, 133, 166, 200, 200]// CURRENT DM REWARDS
+const cpxpRatios = [-1, 27, 20, 9, 5, 15, 25, 31, 32, 35, 32, 48, 52, 79, 84, 87, 98, 133, 166, 200, 200];// CURRENT DM REWARDS
 
 const gnollTax = 1;
 
@@ -42,7 +42,7 @@ module.exports.run = async (bot, message, args) => {
             });
             break;
         case 'spend':
-            if (['the-market', 'dtp-rolls', 'downtime', 'guild-hall', 'hall-of-dms', 'magic-item-research-and-crafting', 'construction', 'magic-item-purchasing', 'business'].indexOf(message.channel.name) < 0 && !funcs.testing(message)) return message.channel.send("Not everything can be bought. Enter **,help spend** for more information on where you can **,spend**.");
+            if (['the-market', 'dtp-rolls', 'downtime', 'guild-hall', 'hall-of-staff', 'magic-item-research-and-crafting', 'construction', 'magic-item-purchasing', 'business'].indexOf(message.channel.name) < 0 && !funcs.testing(message)) return message.channel.send("Not everything can be bought. Enter **,help spend** for more information on where you can **,spend**.");
             if (!args[1]) return message.channel.send('Please specify a valid number.');
             if (args[1][0] == '.') args[1] = '0' + args[1];
             if (isNaN(args[1]) || parseFloat(args[1]) <= 0) return message.channel.send('Please specify a valid number.');
@@ -73,8 +73,8 @@ module.exports.run = async (bot, message, args) => {
                             }
                             break;
                         case 'tp':
-                            if ((message.channel.name != 'hall-of-dms' && message.channel.name != 'magic-item-research-and-crafting' && message.channel.name != 'magic-item-purchasing') && !funcs.testing(message))
-                                return message.channel.send("You can't spend TP anywhere. Go to the " + message.guild.channels.find('name', 'hall-of-dms') + ', or the ' + message.guild.channels.find('name', 'magic-item-research-and-crafting') + ' channel if adding MP to a project.');
+                            if ((message.channel.name != 'hall-of-staff' && message.channel.name != 'magic-item-research-and-crafting' && message.channel.name != 'magic-item-purchasing') && !funcs.testing(message))
+                                return message.channel.send("You can't spend TP anywhere. Go to the " + message.guild.channels.find('name', 'hall-of-staff') + ', or the ' + message.guild.channels.find('name', 'magic-item-research-and-crafting') + ' channel if adding MP to a project.');
                             samt *= 2;
                             if (samt > row.tp) message.channel.send("You cannot spend more " + stype + " than you have.");
                             else {
@@ -197,7 +197,7 @@ module.exports.run = async (bot, message, args) => {
             });
             break;
         case 'transfer':
-            if (!funcs.testing(message) && (message.channel.name != 'auction-house' && message.channel.name != 'hall-of-dms' && message.channel.name != 'guild-hall'&& message.channel.name != 'business')) return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-dms') + '.');
+            if (!funcs.testing(message) && (message.channel.name != 'auction-house' && message.channel.name != 'hall-of-staff' && message.channel.name != 'guild-hall'&& message.channel.name != 'business')) return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-staff') + '.');
             if (!args[1]) return message.channel.send('Please specify a valid amount of GP.');
             if (args[1][0] == '.') args[1] = '0' + args[1];
             if (isNaN(args[1]) || parseFloat(args[1]) <= 0 || parseInt(parseFloat(args[1])*100) - parseFloat(args[1])*100 != 0) return message.channel.send('Please specify a valid number of GP.');
@@ -205,7 +205,7 @@ module.exports.run = async (bot, message, args) => {
             let trecipient = message.guild.member(message.mentions.users.first() || message.guild.members.get((args[2].toLowerCase() == 'gp' ? args[3] : args[2])));
             if (!trecipient) return message.channel.send('Please specify who you intend to transfer gp to.');
             if (trecipient.id == message.author.id) message.channel.send("Fuck off and quit wasting my time!");
-            if (trecipient.id != '429691339270258688' && message.channel.name == 'guild-hall') return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-dms') + '.');
+            if (trecipient.id != '429691339270258688' && message.channel.name == 'guild-hall') return message.channel.send("Any gold sent to another guild member must be done in the " + message.guild.channels.find('name', 'hall-of-staff') + '.');
             let tamt = parseFloat(args[1])*100;
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
                 if (!row) message.channel.send("We haven't got a file for you, kid. You need to be initiated into the guild before you can transfer cash to an adventurer.");
@@ -216,7 +216,7 @@ module.exports.run = async (bot, message, args) => {
                             if (trecipient.id == '429691339270258688') message.channel.send('You have donated ' + args[1] + " GP to the Adventurer's Guild of Remnant. Thanks for your support.");
                             else {
                                 if (!row2) return message.channel.send('You cannot send gold to someone who isn\'t initiated.');
-                                else {message.channel.send(row.name + ' has transfered ' + args[1] + ' GP to ' + row2.name + '.');
+                                else {message.channel.send(row.name + ' ('+message.author.toString()+') has transfered ' + args[1] + ' GP to ' + row2.name + ' ('+trecipient.toString()+').');
                             }
                             sql.run(`UPDATE charlog SET cp = ${row.cp - tamt} WHERE userId = ${message.author.id}`);
                             sql.run(`UPDATE charlog SET cp = ${row2.cp + tamt} WHERE userId = ${trecipient.id}`);
@@ -233,8 +233,8 @@ module.exports.run = async (bot, message, args) => {
             break;
         case 'initiate':
             if (!funcs.hasPermission('initiate', message)) return message.channel.send('Only a GM or Staff member can initiate a new Guild Member.');
-            if (!funcs.testing(message) && message.channel.name != 'hall-of-dms' && message.channel.name != 'office-of-alice') return message.channel.send("Important paperwork such as this must be notarized. Go to the " +
-                message.guild.channels.find('name', 'hall-of-dms') + ' or the ' + message.guild.channels.find('name', 'office-of-alice') + ' to be initiated.');
+            if (!funcs.testing(message) && message.channel.name != 'hall-of-staff' && message.channel.name != 'office-of-alice') return message.channel.send("Important paperwork such as this must be notarized. Go to the " +
+                message.guild.channels.find('name', 'hall-of-staff') + ' or the ' + message.guild.channels.find('name', 'office-of-alice') + ' to be initiated.');
             let initiat = message.guild.member(message.mentions.users.first()) || message.member;
             if (initiat.id != message.author.id && !funcs.hasPermission('dmreward', message)) return message.channel.send('Only a GM or Staff member can initiate a new Guild Member.');
             sql.get('SELECT * FROM charlog WHERE userId = ' + initiat.id).then(row => {
@@ -248,8 +248,8 @@ module.exports.run = async (bot, message, args) => {
             });
             break;
         case 'retire':
-            if (message.channel.name != 'hall-of-dms' && !funcs.testing(message)) return message.channel.send("Important paperwork such as this must be notarized in triplicate. Go to the " +
-                message.guild.channels.find('name', 'hall-of-dms') + ' if you wish to retire.');
+            if (message.channel.name != 'hall-of-staff' && !funcs.testing(message)) return message.channel.send("Important paperwork such as this must be notarized in triplicate. Go to the " +
+                message.guild.channels.find('name', 'hall-of-staff') + ' if you wish to retire.');
             sql.get(`SELECT * FROM charlog WHERE userId ="${message.author.id}"`).then(row => {
                 if (!row || !funcs.hasPermission('swap', message)) return message.channel.send("According to my records, you are not a member of our guild.");
                 else {
