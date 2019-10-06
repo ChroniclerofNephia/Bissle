@@ -137,7 +137,7 @@ bot.on("message", async (message) => {
                 reset(message);
                 break;
             case "makeitrain":
-                if (!funcs.isNorrick(message)) break;
+                /*if (!funcs.isNorrick(message)) break;
                 message.guild.members.forEach(wanker => {
                     if (bot.vault[wanker.id]) {
                         bot.vault[wanker.id].cp = bot.vault[wanker.id].cp+8000;
@@ -147,7 +147,7 @@ bot.on("message", async (message) => {
                     if (err) throw err;
                 });
                 bot.commands.get('charlog').run(bot, message, args);
-                console.log("RAIN MADE");
+                console.log("RAIN MADE");*/
                 // Log Membership
                 /*
                 let memberData = "id,username,discriminator,nickname,lastMessageSent\n";
