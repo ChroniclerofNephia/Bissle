@@ -68,17 +68,23 @@ module.exports.run = async (bot, message, args) => {
             removelfg(bot, message, args[2], false);
             break;
         case 'purge':
+            let tiery = null;
             if (!funcs.hasPermission('nonsense', message)) return funcs.invalid(message);
             if (!args[2]) return message.channel.send('Please specify the number of days beyond which folks should be purged from lfg.\n(e.g. **,lfg purge 7**)');
-            if (isNaN(args[2])) return message.channel.send('Please choose a valid number of days.');
+            if (args[2] = 'pbp') {
+                if (!args[3]) return message.channel.send('Please specify the number of days beyond which folks should be purged from lfg pbp.\n(e.g. **,lfg purge pbp 7**)');
+                if (isNaN(args[3])) return message.channel.send('Please choose a valid number of days.');
+                tiery = 'pbp';
+            }
+            else if (isNaN(args[2])) return message.channel.send('Please choose a valid number of days.');
             let lfg = bot.lfg; let purgeMsg = '';
             if (args[2] == -1) message.channel.send('***PPPUUURRRRRRRRRRRRRGGGEEE!!!!***');
             let someonePurged = false;
             for (i in lfg) { // ASSEMBLE NAMES AND WAITS
                 let wait = (Date.now() - lfg[i].time)/86400000;
-                if (wait > parseFloat(args[2]) && (lfg[i].low || lfg[i].mid || lfg[i].high || lfg[i].epic || lfg[i].pbp)) {
+                if (wait > parseFloat(args[2]) && (((lfg[i].low || lfg[i].mid || lfg[i].high || lfg[i].epic) && tiery != 'pbp') || (tiery == 'pbp' && lfg[i].pbp))) {
                     purgeMsg += lfg[i].name + ' has been purged from LFG.\n';
-                    removelfg(bot, message, null, true, i);
+                    removelfg(bot, message, tiery, true, i);
                     someonePurged = true;
                 }
             }
@@ -144,13 +150,16 @@ function removelfg(bot, message, tier=null, purge=false, personID=null) {
         if (!role || !removee.roles.has(role.id))
             return funcs.invalid(message);
         if (purge) {
-            removee.removeRole(removee.guild.roles.find("name", "LFG-pbp"));
-            removee.removeRole(removee.guild.roles.find("name", "LFG-epic"));
-            removee.removeRole(removee.guild.roles.find("name", "LFG-high"));
-            removee.removeRole(removee.guild.roles.find("name", "LFG-mid"));
-            removee.removeRole(removee.guild.roles.find("name", "LFG-low"));
-            removee.removeRole(role);
-            delete bot.lfg[removee.id];
+            if (tier == 'pbp') removee.removeRole(removee.guild.roles.find("name", "LFG-pbp"));
+            else {
+                removee.removeRole(removee.guild.roles.find("name", "LFG-epic"));
+                removee.removeRole(removee.guild.roles.find("name", "LFG-high"));
+                removee.removeRole(removee.guild.roles.find("name", "LFG-mid"));
+                removee.removeRole(removee.guild.roles.find("name", "LFG-low"));
+                removee.removeRole(role);
+            }
+            let z = bot.lfg[removee.id];
+            if (!z.epic && !z.high && !z.mid && !z.low && !z.pbp) delete bot.lfg[removee.id];
         }
         else if (!tier || !bot.lfg[removee.id]) { // TURN EVERYTHING OFF
             removee.removeRole(removee.guild.roles.find("name", "LFG-epic"));
