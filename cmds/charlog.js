@@ -178,7 +178,7 @@ module.exports.run = async (bot, message, args) => {
                     else if (level < 13) xpamt *= dmRewardBracket[1];
                     else xpamt *= dmRewardBracket[2];
                     let cpamt = xpamt*cpxpRatios[level];
-                    let tpamt = (level < 11 ? (level < 5 ? 1 : 2) : (level < 17 ? 3 : 4));
+                    let tpamt = 2*(level < 11 ? (level < 5 ? 1 : 2) : (level < 17 ? 3 : 4));
 
                     message.channel.send(rowDM.name + ' has been awarded ' + xpamt + ' XP, ' + (cpamt/100) + ' GP, and ' + (tpamt/2.0) + ' TP.');
                     let increase = 0;
