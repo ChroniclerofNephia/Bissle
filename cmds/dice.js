@@ -40,6 +40,7 @@ function rollOnce(message, args) { // Formats results of a single rollset
     }
     output += stringNsum[0] + '\n**Total:** ' + stringNsum[1];
     message.channel.send(output);
+    message.delete();
 }
 
 function rollLots(message, args) { // Formats results of multiple rollsets
@@ -72,6 +73,7 @@ function rollLots(message, args) { // Formats results of multiple rollsets
     // Display total
     output += '**Total:** ' + sum;
     message.channel.send(output);
+    message.delete();
 }
 
 function roll(message, rollstring) { // Parses, interprets operators, returns results
