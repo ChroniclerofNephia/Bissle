@@ -9,7 +9,7 @@ module.exports.run = async (bot, message, args) => {
     // CHECK PERMISSIONS
     if (message.channel.type === 'dm') return;
     if (!message.member.roles.find("name", "Guild Member")) return message.channel.send('You can only LFG if you are a registered Guild Member.')
-    if ((message.channel.name != 'lfg' || message.channel.name != 'group-up') && !funcs.testing(message)) return message.channel.send('Please LFG in ' + bot.channels.get('371684792988860417') + '.');
+    if ((message.channel.name != 'lfg' && message.channel.name != 'group-up') && !funcs.testing(message)) return message.channel.send('Please LFG in ' + bot.channels.get('371684792988860417') + '.');
     
     if (!args[1]) { // TOGGLE
         if(!funcs.hasRole('LFG', message.member))
