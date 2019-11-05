@@ -6,7 +6,7 @@ module.exports.run = async (bot, message, args) => {
     // CHECK PERMISSIONS
     if (message.channel.type === 'dm') return;
     if (!message.member.roles.find("name", "Guild Member")) return funcs.invalid(message);
-    if (message.channel.name != 'lfg' && !funcs.testing(message)) return message.channel.send('Please do yer shit in ' + bot.channels.get('371684792988860417') + '.');
+    if ((message.channel.name != 'group-up' && message.channel.name != 'ping-for-dm') && !funcs.testing(message)) return message.channel.send('Please do yer shit in ' + bot.channels.get('371684792988860417') + '.');
     
     if (!args[1]) { // TOGGLE
         if(!funcs.hasPermission('dmreward', message)) message.channel.send(dmList(message));
