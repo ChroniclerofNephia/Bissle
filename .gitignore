@@ -1,0 +1,8 @@
+# Config Files
+
+src/botsettings.json
+
+# Node modules
+
+/node_modules
+
